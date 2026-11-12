@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>해외사업팀 일일보고</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+/* Layout idea: 운영 콘솔. 상단에 팀 현지 시각 스트립, 그 아래 탭 4개(현황·작성·이력·팀원), 요약 → 세부 순으로 스캔 */
+:root{
+  --paper:#f2f4f3;
+  --surface:#ffffff;
+  --ink:#16222b;
+  --muted:#5b6a73;
+  --line:#dbe2e4;
+  --accent:#0a6577;
+  --accent-ink:#ffffff;
+  --accent-soft:#e0eef0;
+  --ok:#1d7f47; --ok-soft:#e1f3e8;
+  --warn:#a5680f; --warn-soft:#fbf0dc;
+  --bad:#b8392a; --bad-soft:#fbe4e0;
+  --info:#2c64a8; --info-soft:#e3ecf8;
+  --idle:#8a979e; --idle-soft:#eceff0;
+  --font-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r:8px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
+    --accent:#4db0be; --accent-ink:#06191d; --accent-soft:#143238;
+    --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
+    --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
+    --idle:#73828a; --idle-soft:#1d262b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
+  --accent:#4db0be; --accent-ink:#06191d; --accent-soft:#143238;
+  --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
+  --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
+  --idle:#73828a; --idle-soft:#1d262b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.3}
+h2{font-size:15px;font-weight:700}
+h3{font-size:14px;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+.mono,.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- header ---------- */
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1280px;margin:0 auto;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px}
+.brand-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.brand .sub{color:var(--muted);font-size:13px}
+.mode{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.mode i{width:7px;height:7px;border-radius:50%;background:var(--idle);display:inline-block}
+.mode[data-mode="claude"] i,.mode[data-mode="sheets"] i{background:var(--ok)}
+.mode[data-mode="local"] i{background:var(--warn)}
+.clocks{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.clock{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:4px 10px;white-space:nowrap;font-size:12px}
+.clock b{font-family:var(--font-mono);font-size:13px;font-weight:600}
+.clock .city{color:var(--muted)}
+.clock .off{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.clock .dot{width:6px;height:6px;border-radius:50%;background:var(--idle)}
+.clock .dot.on{background:var(--ok)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto}
+nav.tabs a{padding:10px 14px;text-decoration:none;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs a:hover{color:var(--ink)}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+nav.tabs a.cta{color:var(--accent);font-weight:600}
+
+main{max-width:1280px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.banner{border:1px solid var(--line);background:var(--surface);border-left:4px solid var(--info);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.banner.warn{border-left-color:var(--warn)}
+.banner.demo{border-left-color:var(--accent);background:var(--accent-soft)}
+.banner .grow{flex:1;min-width:200px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.card-h .meta{color:var(--muted);font-size:12px}
+.card-h .right{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:500;font-size:13px;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.icon-btn{border:1px solid transparent;background:transparent;border-radius:6px;width:30px;height:32px;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;flex:none}
+.icon-btn:hover{color:var(--bad);border-color:var(--line)}
+input[type=text],input[type=date],input[type=month],input[type=number],input[type=search],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input:hover,select:hover,textarea:hover{border-color:var(--muted)}
+textarea{resize:vertical;min-height:70px}
+.fl{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+label.fl{align-items:stretch}
+.fl > span em{color:var(--bad);font-style:normal}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:6px 11px;cursor:pointer;font-size:13px;border-right:1px solid var(--line);color:var(--muted)}
+.seg label:last-of-type{border-right:0}
+.seg input:checked + label{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.seg input:focus-visible + label{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* ---------- pills ---------- */
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:600;white-space:nowrap;line-height:1.6}
+.s-완료,.p-ok{background:var(--ok-soft);color:var(--ok)}
+.s-진행중,.p-info{background:var(--info-soft);color:var(--info)}
+.s-대기,.p-idle{background:var(--idle-soft);color:var(--muted)}
+.s-지연,.p-bad{background:var(--bad-soft);color:var(--bad)}
+.l-높음{background:var(--bad-soft);color:var(--bad)}
+.l-보통{background:var(--warn-soft);color:var(--warn)}
+.l-낮음{background:var(--idle-soft);color:var(--muted)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-accent{background:var(--accent-soft);color:var(--accent)}
+
+/* ---------- status view ---------- */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toolbar .date-input{width:auto}
+.toolbar h2{font-size:17px;margin-right:6px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;border-top:3px solid var(--line)}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--font-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .v small{font-size:14px;color:var(--muted);font-weight:500}
+.kpi .d{font-size:12px;color:var(--muted)}
+.kpi.ok{border-top-color:var(--ok)} .kpi.bad{border-top-color:var(--bad)} .kpi.warn{border-top-color:var(--warn)} .kpi.info{border-top-color:var(--info)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:13px;background:var(--surface)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--idle)}
+.chip.done i{background:var(--ok)} .chip.off i{background:var(--info)} .chip.miss{color:var(--muted);border-style:dashed}
+.chip .t{font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+
+.matrix-wrap{overflow-x:auto}
+table.matrix{border-collapse:separate;border-spacing:3px;font-size:12px}
+table.matrix th{font-weight:500;color:var(--muted);text-align:center;padding:0 2px;white-space:nowrap}
+table.matrix th.name{text-align:left;color:var(--ink);padding-right:10px;font-weight:600}
+table.matrix td{padding:0}
+.cell{display:block;width:30px;height:22px;border-radius:4px;border:1px dashed var(--line);background:transparent;cursor:pointer;padding:0}
+.cell.done{background:var(--ok);border:0;opacity:.85}
+.cell.trip{background:var(--accent);border:0}
+.cell.off{background:var(--info-soft);border:1px solid var(--info)}
+.cell.sel{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend .cell{width:14px;height:12px;cursor:default}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.members{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.mcard.missing{border-style:dashed;background:transparent}
+.mcard .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mcard .who b{font-size:15px}
+.mcard .who .r{color:var(--muted);font-size:12px}
+.mcard .who .t{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.tasklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tasklist li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font-size:13px}
+.tasklist .cat{color:var(--muted);font-size:12px}
+.tasklist .cl{font-weight:600}
+.sublabel{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.plans{margin:0;padding-left:18px;font-size:13px;color:var(--ink)}
+.issue{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.issue:first-child{border-top:0;padding-top:0}
+.issue .body{flex:1;min-width:0}
+.issue .by{color:var(--muted);font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+.tbl-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.tbl tr:last-child td{border-bottom:0}
+table.tbl td.n{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.tbl tbody tr.click{cursor:pointer}
+table.tbl tbody tr.click:hover{background:var(--accent-soft)}
+.totals{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.totals b{font-family:var(--font-mono);color:var(--ink);font-size:13px}
+
+/* ---------- write view ---------- */
+.write{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.form{display:flex;flex-direction:column;gap:14px}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.sec-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec-h .no{font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:600}
+.sec-h .hint{color:var(--muted);font-size:12px}
+.sec-h .right{margin-left:auto;display:flex;gap:6px}
+.fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.fields .span2{grid-column:span 2}
+.fields .span4{grid-column:1/-1}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{display:grid;gap:6px;align-items:center}
+.row[data-row="tasks"],.row[data-row="plans"]{grid-template-columns:150px 180px minmax(0,1fr) 100px 30px}
+.row[data-row="plans"]{grid-template-columns:150px 180px minmax(0,1fr) 30px}
+.row[data-row="pipeline"]{grid-template-columns:minmax(0,1.3fr) 110px 120px 120px 84px 130px 30px}
+.row[data-row="issues"]{grid-template-columns:minmax(0,1fr) 90px 150px 30px}
+.row-head{display:grid;gap:6px;font-size:11.5px;color:var(--muted);font-weight:600;padding:0 2px}
+.row.resolved{opacity:.55}
+.notice{border-radius:6px;padding:8px 12px;font-size:13px;background:var(--info-soft);color:var(--info)}
+.notice.ok{background:var(--ok-soft);color:var(--ok)}
+.notice.bad{background:var(--bad-soft);color:var(--bad)}
+.submit-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;bottom:0;background:var(--paper);padding:10px 0;border-top:1px solid var(--line)}
+.submit-bar .grow{flex:1}
+.preview{position:sticky;top:12px;display:flex;flex-direction:column;gap:10px}
+.preview pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--font-body);font-size:12.5px;line-height:1.6;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:12px;max-height:60vh;overflow:auto}
+.errs{margin:0;padding-left:18px;color:var(--bad);font-size:13px}
+
+/* ---------- history / team ---------- */
+.filters{display:grid;grid-template-columns:180px 150px 150px minmax(0,1fr);gap:10px;align-items:end}
+.team-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 130px minmax(0,1fr) 30px;gap:8px;align-items:center}
+.help{color:var(--muted);font-size:13px;max-width:70ch}
+.help ol{padding-left:18px;margin:6px 0}
+.help code{font-family:var(--font-mono);font-size:12px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+/* ---------- modal & toast ---------- */
+.overlay{position:fixed;inset:0;background:rgba(10,18,22,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;max-width:760px;width:100%;padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal-h{display:flex;align-items:center;gap:10px}
+.modal-h .right{margin-left:auto;display:flex;gap:6px}
+.modal textarea{min-height:240px;font-family:var(--font-mono);font-size:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.hidden{display:none!important}
+.loading{color:var(--muted);padding:30px 0;text-align:center}
+
+@media (max-width:1060px){
+  .write{grid-template-columns:1fr}
+  .preview{position:static}
+  .grid2{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .fields{grid-template-columns:1fr 1fr}
+  .row[data-row]{grid-template-columns:1fr 1fr 30px!important}
+  .row[data-row] > :not(.icon-btn){grid-column:span 1}
+  .row[data-row] [data-f="content"],.row[data-row] [data-f="client"]{grid-column:1 / span 2}
+  .row[data-row] .icon-btn{grid-column:3;grid-row:1}
+  .row-head{display:none}
+  .row[data-row]{border-bottom:1px solid var(--line);padding-bottom:8px}
+  .filters{grid-template-columns:1fr 1fr}
+  .team-row{grid-template-columns:1fr 1fr 30px}
+  .team-row [data-t="region"],.team-row [data-t="role"]{grid-column:span 1}
+  .team-row .icon-btn{grid-column:3;grid-row:1}
+}
+@media (max-width:420px){
+  .top-inner,main{padding-left:16px;padding-right:16px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .fields{grid-template-columns:1fr}
+  .fields .span2{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand-row">
+      <div class="brand"><h1 id="teamTitle">해외사업팀 일일보고</h1><span class="sub" id="todayLabel"></span></div>
+      <span class="mode" id="modeBadge" data-mode="connecting"><i></i><span>연결 중</span></span>
+    </div>
+    <div class="clocks" id="clocks" aria-label="팀원 현지 시각"></div>
+    <nav class="tabs" aria-label="화면 선택">
+      <a href="#status" data-view="status">팀 현황</a>
+      <a href="#write" data-view="write" class="cta">보고 작성</a>
+      <a href="#history" data-view="history">보고 이력</a>
+      <a href="#team" data-view="team">팀원·설정</a>
+    </nav>
+  </div>
+</header>
+<main id="app"><div class="loading">불러오는 중…</div></main>
+<div id="modalRoot"></div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =========================================================
+   설정 · 상수
+   ========================================================= */
+const CFG = Object.assign({ TEAM_NAME: "해외사업팀", SHEETS_API_URL: "" }, window.BD_CONFIG || {});
+const WORK_TYPES = ["사무실", "재택", "출장", "외근", "반차", "휴가"];
+const OFF_TYPES = ["휴가"];
+const TRIP_TYPES = ["출장", "외근"];
+const LOADS = ["여유", "적정", "과중"];
+const TASK_CATS = ["바이어 미팅", "제안·견적", "계약·협상", "시장조사", "전시회·행사", "수출입·물류", "파트너 관리", "내부 보고·회의", "기타"];
+const STATUSES = ["완료", "진행중", "대기", "지연"];
+const STAGES = ["리드", "첫 접촉", "제안·견적", "협상", "계약", "보류", "실주"];
+const ACTIVE_STAGES = ["리드", "첫 접촉", "제안·견적", "협상"];
+const CURRENCIES = ["USD", "EUR", "JPY", "CNY", "KRW", "AED", "SAR", "VND", "THB", "기타"];
+const LEVELS = ["높음", "보통", "낮음"];
+const REGIONS = [
+  { k: "본사", tz: "Asia/Seoul", city: "서울" },
+  { k: "중국", tz: "Asia/Shanghai", city: "상하이" },
+  { k: "일본", tz: "Asia/Tokyo", city: "도쿄" },
+  { k: "동남아", tz: "Asia/Singapore", city: "싱가포르" },
+  { k: "인도", tz: "Asia/Kolkata", city: "뉴델리" },
+  { k: "중동", tz: "Asia/Dubai", city: "두바이" },
+  { k: "유럽", tz: "Europe/Berlin", city: "프랑크푸르트" },
+  { k: "아프리카", tz: "Africa/Johannesburg", city: "요하네스버그" },
+  { k: "북미", tz: "America/New_York", city: "뉴욕" },
+  { k: "중남미", tz: "America/Sao_Paulo", city: "상파울루" },
+  { k: "오세아니아", tz: "Australia/Sydney", city: "시드니" }
+];
+const TITLES = ["상무", "이사", "부장", "차장", "과장", "대리", "주임", "사원"];
+const ISSUE_TARGETS = ["유관부서", "물류팀", "법무팀", "재무팀", "품질팀", "생산팀"];
+const VIEWS = ["status", "write", "history", "team"];
+const dispName = m => m ? (m.name || "") + (m.title ? " " + m.title : "") : "";
+const leaderLabel = t => t && t.leader && t.leader.name ? `팀장 ${t.leader.name}${t.leader.title ? " " + t.leader.title : ""}` : "";
+const defaultTeam = () => CFG.TEAM && Array.isArray(CFG.TEAM.members) ? clone(Object.assign({ teamName: CFG.TEAM_NAME, leader: null }, CFG.TEAM)) : { teamName: CFG.TEAM_NAME, leader: null, members: [] };
+
+/* =========================================================
+   유틸
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+const DOW = "일월화수목금토";
+const fmtDate = s => { const d = parseYmd(s); return `${d.getMonth() + 1}/${d.getDate()} (${DOW[d.getDay()]})`; };
+const fmtDateLong = s => { const d = parseYmd(s); return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`; };
+const isWeekend = s => { const g = parseYmd(s).getDay(); return g === 0 || g === 6; };
+const prevWorkday = s => { let x = addDays(s, -1); while (isWeekend(x)) x = addDays(x, -1); return x; };
+const nextWorkday = s => { let x = addDays(s, 1); while (isWeekend(x)) x = addDays(x, 1); return x; };
+const today = () => ymd(new Date());
+const fmtTime = iso => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const newId = () => "m" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const clone = o => JSON.parse(JSON.stringify(o));
+const fmtAmt = n => (n || n === 0) && !isNaN(n) ? Number(n).toLocaleString("en-US") : "";
+const opts = (list, val) => list.map(v => `<option${v === val ? " selected" : ""}>${esc(v)}</option>`).join("");
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+const lsDel = k => { try { localStorage.removeItem(k); } catch (e) {} };
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.remove("hidden");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add("hidden"), 2600);
+}
+
+/* =========================================================
+   저장소 (Claude 공유 DB / Google Sheets / 이 브라우저)
+   ========================================================= */
+const Store = {
+  mode: "connecting", note: "", canWrite: true,
+  team: defaultTeam(),
+  reports: new Map(),
+  listeners: new Set(),
+  emit() { this.listeners.forEach(f => { try { f(); } catch (e) { console.error(e); } }); }
+};
+let backend = null;
+
+const LS_KEY = "bd-daily-report-v1";
+const LocalBackend = {
+  name: "local",
+  async start() {
+    const o = lsGet(LS_KEY, {});
+    if (o.team && Array.isArray(o.team.members) && o.team.members.length) Store.team = o.team;
+    (o.reports || []).forEach(r => Store.reports.set(r.id, r));
+    Store.loaded = true;
+    Store.emit();
+  },
+  persist() {
+    if (!lsSet(LS_KEY, { team: Store.team, reports: [...Store.reports.values()] }))
+      Store.note = "이 브라우저는 저장을 허용하지 않아 새로고침하면 내용이 사라집니다. 이력 탭에서 JSON으로 백업하세요.";
+  },
+  async saveTeam(t) { Store.team = clone(t); this.persist(); Store.emit(); },
+  async saveReport(r) { Store.reports.set(r.id, clone(r)); this.persist(); Store.emit(); },
+  async deleteReport(id) { Store.reports.delete(id); this.persist(); Store.emit(); }
+};
+
+function ClaudeBackend(db) {
+  const retry = async fn => {
+    try { return await fn(); }
+    catch (e) {
+      if (e && e.code === "unavailable") { await new Promise(r => setTimeout(r, 600 + Math.random() * 900)); return fn(); }
+      if (e && e.code === "invalid_argument") { Store.canWrite = false; Store.emit(); throw new Error("이 보고서에 쓸 권한이 없습니다. 공유 설정에서 편집 권한을 받아야 합니다."); }
+      if (e && e.code === "quota_exceeded") throw new Error("저장 공간이 가득 찼습니다. 오래된 보고를 내보낸 뒤 삭제하세요.");
+      throw new Error((e && e.message) || "저장하지 못했습니다.");
+    }
+  };
+  return {
+    name: "claude",
+    async start() {
+      const timer = setTimeout(() => { Store.note = "공유 저장소 응답이 늦어지고 있습니다. 표시된 내용이 최신이 아닐 수 있습니다."; Store.emit(); }, 10000);
+      db.doc("config/team").onSnapshot(s => {
+        if (s.exists) {
+          const d = s.data() || {};
+          if (Array.isArray(d.members)) Store.team = { teamName: d.teamName || CFG.TEAM_NAME, leader: d.leader || null, members: d.members };
+        }
+        Store.emit();
+      }, e => { Store.note = "팀 정보를 불러오지 못했습니다 (" + e.code + ")."; Store.emit(); });
+      db.collection("reports").orderBy("date", "desc").limit(1000).onSnapshot(s => {
+        if (!s.metadata.fromCache) { clearTimeout(timer); if (Store.note.startsWith("공유 저장소 응답")) Store.note = ""; }
+        Store.reports = new Map(s.docs.map(d => [d.id, Object.assign({}, d.data(), { id: d.id })]));
+        Store.loaded = true;
+        Store.emit();
+      }, e => { clearTimeout(timer); Store.loaded = true; Store.note = "보고 데이터를 불러오지 못했습니다 (" + e.code + "). 페이지를 다시 열어 주세요."; Store.emit(); });
+    },
+    async saveTeam(t) { await retry(() => db.doc("config/team").set(clone(t))); },
+    async saveReport(r) { await retry(() => db.collection("reports").doc(r.id).set(clone(r))); },
+    async deleteReport(id) { await retry(() => db.collection("reports").doc(id).delete()); }
+  };
+}
+
+function SheetsBackend(url) {
+  return {
+    name: "sheets",
+    async start() { await this.pull(); setInterval(() => { if (!document.hidden) this.pull(); }, 60000); },
+    async pull() {
+      try {
+        const res = await fetch(url + (url.includes("?") ? "&" : "?") + "action=all");
+        const j = await res.json();
+        if (!j.ok) throw new Error(j.error);
+        if (j.team && Array.isArray(j.team.members) && j.team.members.length) Store.team = j.team;
+        Store.reports = new Map((j.reports || []).map(r => [r.id, r]));
+        Store.note = "";
+      } catch (e) {
+        Store.note = "Google Sheets에 연결하지 못했습니다. config.js의 SHEETS_API_URL과 Apps Script 배포 권한(모든 사용자)을 확인하세요.";
+      }
+      Store.loaded = true;
+      Store.emit();
+    },
+    async post(body) {
+      const res = await fetch(url, { method: "POST", body: JSON.stringify(body) });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || "저장하지 못했습니다.");
+    },
+    async saveTeam(t) { await this.post({ action: "saveTeam", team: t }); Store.team = clone(t); Store.emit(); },
+    async saveReport(r) { await this.post({ action: "saveReport", report: r }); Store.reports.set(r.id, clone(r)); Store.emit(); },
+    async deleteReport(id) { await this.post({ action: "deleteReport", id }); Store.reports.delete(id); Store.emit(); }
+  };
+}
+
+/* 파일 내보내기: 아티팩트에서는 downloads 기능, 일반 웹에서는 브라우저 다운로드 */
+async function offerFile(filename, text) {
+  if (window.claude && typeof window.claude.use === "function") {
+    let dl = null;
+    try { dl = await window.claude.use("downloads"); } catch (e) {}
+    if (dl) {
+      try { await dl.save({ filename, data: text }); toast("파일을 저장했습니다."); }
+      catch (e) { if (!e || e.code !== "declined") showTextModal(filename, text); }
+      return;
+    }
+    showTextModal(filename, text);
+    return;
+  }
+  try {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  } catch (e) { showTextModal(filename, text); }
+}
+async function copyText(text, el) {
+  try { await navigator.clipboard.writeText(text); toast("복사했습니다. 메신저에 붙여넣으세요."); }
+  catch (e) {
+    if (el) { el.focus(); if (el.select) el.select(); else { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } }
+    toast("자동 복사가 막혀 있습니다. 선택된 내용을 Ctrl+C로 복사하세요.");
+  }
+}
+
+/* =========================================================
+   예시 데이터 (팀원·보고가 하나도 없을 때 현황 화면에만 표시, 저장하지 않음)
+   ========================================================= */
+function buildDemo() {
+  const t = today();
+  const M = [
+    { id: "demo1", name: "김도윤", region: "중동", role: "UAE·사우디" },
+    { id: "demo2", name: "이서연", region: "유럽", role: "독일·폴란드" },
+    { id: "demo3", name: "박준호", region: "북미", role: "미국·캐나다" },
+    { id: "demo4", name: "최하은", region: "동남아", role: "베트남·태국" },
+    { id: "demo5", name: "정민재", region: "본사", role: "수출입·물류 지원" }
+  ];
+  const mk = (date, m, x) => Object.assign({ id: `${date}__${m.id}`, date, memberId: m.id, memberName: m.name, region: m.region, workType: "사무실", location: "", load: "적정", tasks: [], plans: [], pipeline: [], issues: [], notes: "", submittedAt: `${date}T18:0${(m.id.slice(-1) * 7) % 10}:00`, updatedAt: `${date}T18:10:00` }, x);
+  const R = [];
+  R.push(mk(t, M[0], {
+    workType: "출장", location: "두바이", submittedAt: `${t}T17:42:00`,
+    tasks: [
+      { cat: "바이어 미팅", client: "Al Noor Trading", content: "2차 샘플 품질 피드백 협의, 포장 사양 변경 요청 접수", status: "완료" },
+      { cat: "계약·협상", client: "Gulf Retail Group", content: "단가 조정안 회신 대기", status: "진행중" },
+      { cat: "전시회·행사", client: "Big 5 Global", content: "부스 설치 일정·전력 사양 확인", status: "완료" }
+    ],
+    plans: [{ cat: "계약·협상", client: "Gulf Retail Group", content: "단가안 최종 회신" }, { cat: "바이어 미팅", client: "리야드 대리점 후보", content: "신규 대리점 후보 2곳 미팅" }],
+    pipeline: [
+      { client: "Al Noor Trading", country: "UAE", stage: "협상", amount: 120000, currency: "USD", expected: addDays(t, 60).slice(0, 7), note: "포장 사양 변경 시 단가 2% 인상 예상" },
+      { client: "Gulf Retail Group", country: "사우디", stage: "제안·견적", amount: 85000, currency: "USD", expected: addDays(t, 90).slice(0, 7), note: "" }
+    ],
+    issues: [{ content: "Gulf Retail 요청 단가가 내부 마진 기준(15%) 미달. 가격 승인 필요", level: "높음", target: "팀장", resolved: false }],
+    notes: "두바이 현지 내륙 운송비가 전월 대비 약 8% 올랐습니다."
+  }));
+  R.push(mk(t, M[1], {
+    submittedAt: `${t}T17:55:00`,
+    tasks: [
+      { cat: "시장조사", client: "폴란드 B2B 유통", content: "주요 유통 채널 5곳 리스트업, 입점 조건 비교", status: "진행중" },
+      { cat: "제안·견적", client: "Hansa Industrie GmbH", content: "CE 인증 서류 및 견적서 송부", status: "완료" },
+      { cat: "수출입·물류", client: "함부르크향 컨테이너", content: "통관 서류 보완(원산지증명)", status: "지연" }
+    ],
+    plans: [{ cat: "수출입·물류", client: "함부르크향 컨테이너", content: "원산지증명 재발급본 포워더 전달" }],
+    pipeline: [{ client: "Hansa Industrie GmbH", country: "독일", stage: "제안·견적", amount: 64000, currency: "EUR", expected: addDays(t, 120).slice(0, 7), note: "" }],
+    issues: [{ content: "원산지증명 재발급 필요, 선적 2일 지연 예상", level: "보통", target: "물류팀", resolved: false }]
+  }));
+  R.push(mk(t, M[2], {
+    workType: "외근", location: "뉴저지", load: "과중", submittedAt: `${t}T08:31:00`,
+    tasks: [
+      { cat: "바이어 미팅", client: "Northline Supply", content: "연간 공급 계약 갱신 미팅", status: "완료" },
+      { cat: "계약·협상", client: "Northline Supply", content: "계약서 수정본 법무 검토 요청", status: "대기" }
+    ],
+    plans: [{ cat: "계약·협상", client: "Northline Supply", content: "법무 검토 의견 반영 후 서명본 송부" }],
+    pipeline: [{ client: "Northline Supply", country: "미국", stage: "계약", amount: 240000, currency: "USD", expected: addDays(t, 30).slice(0, 7), note: "2027년 연간 물량" }]
+  }));
+  R.push(mk(t, M[3], {
+    submittedAt: `${t}T18:20:00`,
+    tasks: [
+      { cat: "파트너 관리", client: "Saigon Tech Distribution", content: "3분기 실적 리뷰, 4분기 프로모션 협의", status: "완료" },
+      { cat: "제안·견적", client: "Bangkok Home Mart", content: "견적서 v2 작성", status: "진행중" }
+    ],
+    plans: [{ cat: "제안·견적", client: "Bangkok Home Mart", content: "견적서 v2 송부" }],
+    pipeline: [{ client: "Bangkok Home Mart", country: "태국", stage: "리드", amount: 30000, currency: "USD", expected: addDays(t, 150).slice(0, 7), note: "" }],
+    issues: [{ content: "태국 현지 인증 대행사 견적 비교 필요", level: "낮음", target: "", resolved: false }]
+  }));
+  let d = t;
+  for (let i = 0; i < 9; i++) {
+    d = prevWorkday(d);
+    M.forEach((m, j) => {
+      if ((i * 3 + j) % 7 === 4) return;
+      const wt = (i + j) % 11 === 0 ? "휴가" : (j === 0 && i < 3 ? "출장" : "사무실");
+      R.push(mk(d, m, { workType: wt, location: wt === "출장" ? "두바이" : "", tasks: wt === "휴가" ? [] : [{ cat: TASK_CATS[(i + j) % 7], client: "", content: "정기 업무", status: "완료" }] }));
+    });
+  }
+  return { team: { teamName: CFG.TEAM_NAME, members: M }, reports: R };
+}
+let DEMO = null;
+const isDemo = () => Store.mode !== "connecting" && Store.loaded && Store.team.members.length === 0 && Store.reports.size === 0;
+
+/* =========================================================
+   공통 계산
+   ========================================================= */
+const memberById = (team, id) => team.members.find(m => m.id === id);
+const regionOf = k => REGIONS.find(r => r.k === k);
+function countStatus(r) {
+  const c = { 완료: 0, 진행중: 0, 대기: 0, 지연: 0 };
+  (r.tasks || []).forEach(t => { if (c[t.status] != null) c[t.status]++; });
+  return c;
+}
+function reportText(r, teamName) {
+  const L = [];
+  const wt = r.workType + (r.location ? `(${r.location})` : "");
+  L.push(`[${teamName || CFG.TEAM_NAME} 일일보고] ${fmtDate(r.date)} · ${r.memberName || "작성자"}${r.region ? " · " + r.region : ""} · ${wt}`);
+  if (OFF_TYPES.includes(r.workType)) L.push("※ 휴가");
+  const tasks = (r.tasks || []).filter(t => t.content);
+  if (tasks.length) {
+    L.push("", "■ 오늘 한 일");
+    tasks.forEach((t, i) => L.push(`${i + 1}. [${t.cat}]${t.client ? " " + t.client + " –" : ""} ${t.content} (${t.status})`));
+  }
+  const plans = (r.plans || []).filter(t => t.content);
+  if (plans.length) {
+    L.push("", "■ 다음 근무일 계획");
+    plans.forEach((t, i) => L.push(`${i + 1}. ${t.client ? t.client + " – " : ""}${t.content}`));
+  }
+  const pipe = (r.pipeline || []).filter(p => p.client);
+  if (pipe.length) {
+    L.push("", "■ 영업 파이프라인 변동");
+    pipe.forEach(p => L.push(`- ${p.client}${p.country ? " (" + p.country + ")" : ""} ${p.stage}${p.amount ? " · " + p.currency + " " + fmtAmt(p.amount) : ""}${p.expected ? " · 예상 " + p.expected : ""}${p.note ? " · " + p.note : ""}`));
+  }
+  const iss = (r.issues || []).filter(x => x.content);
+  if (iss.length) {
+    L.push("", "■ 이슈·지원 요청");
+    iss.forEach(x => L.push(`- [${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`));
+  }
+  if (r.notes) L.push("", "■ 공유 사항", r.notes);
+  L.push("", `업무량: ${r.load || "적정"}`);
+  return L.join("\n");
+}
+
+/* =========================================================
+   헤더: 현지 시각, 저장 방식
+   ========================================================= */
+function tzParts(tz, now) {
+  const f = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, weekday: "short" });
+  const o = {}; f.formatToParts(now).forEach(p => o[p.type] = p.value);
+  return { date: `${o.year}-${o.month}-${o.day}`, hour: Number(o.hour) % 24, minute: o.minute, wd: o.weekday };
+}
+function renderClocks() {
+  const team = isDemo() ? (DEMO || (DEMO = buildDemo())).team : Store.team;
+  let keys = [...new Set(team.members.map(m => m.region).filter(Boolean))];
+  if (!keys.includes("본사")) keys.unshift("본사");
+  if (keys.length < 2) keys = ["본사", "중동", "유럽", "북미"];
+  keys.sort((a, b) => REGIONS.findIndex(r => r.k === a) - REGIONS.findIndex(r => r.k === b));
+  const now = new Date();
+  const seoul = tzParts("Asia/Seoul", now);
+  $("#clocks").innerHTML = keys.map(k => {
+    const r = regionOf(k); if (!r) return "";
+    const p = tzParts(r.tz, now);
+    const diff = Math.round((parseYmd(p.date) - parseYmd(seoul.date)) / 864e5);
+    const on = !["Sat", "Sun"].includes(p.wd) && p.hour >= 9 && p.hour < 18;
+    return `<span class="clock" title="${esc(r.k)} 현지 시각${on ? " · 업무 시간" : ""}"><span class="dot${on ? " on" : ""}"></span><span class="city">${esc(r.city)}</span><b>${pad(p.hour)}:${p.minute}</b>${diff ? `<span class="off">${diff > 0 ? "+" : ""}${diff}일</span>` : ""}</span>`;
+  }).join("");
+  $("#todayLabel").textContent = [leaderLabel(isDemo() ? null : Store.team), fmtDateLong(today())].filter(Boolean).join(" · ");
+}
+function renderMode() {
+  const b = $("#modeBadge");
+  const label = { connecting: "연결 중", claude: "팀 공유 저장소", sheets: "Google Sheets 공유", local: "이 브라우저에만 저장" }[Store.mode];
+  b.dataset.mode = Store.mode; b.querySelector("span").textContent = label;
+  b.title = Store.mode === "local" ? "다른 팀원과 공유되지 않습니다. 팀원·설정 탭에서 공유 방법을 확인하세요." : "";
+  const name = (Store.team.teamName || CFG.TEAM_NAME);
+  $("#teamTitle").textContent = `${name} 일일보고`;
+  document.title = `${name} 일일보고`;
+}
+
+/* =========================================================
+   라우팅
+   ========================================================= */
+const UI = { view: "status", date: today(), editId: null, hist: { member: "", from: addDays(today(), -30), to: today(), q: "" } };
+function currentView() { const h = location.hash.slice(1); return VIEWS.includes(h) ? h : "status"; }
+function render() {
+  UI.view = currentView();
+  $$("nav.tabs a").forEach(a => { if (a.dataset.view === UI.view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  renderMode(); renderClocks();
+  const app = $("#app");
+  const banner = bannersHTML();
+  if (Store.mode === "connecting" || !Store.loaded) { app.innerHTML = banner + `<div class="loading">공유 저장소에 연결하는 중…</div>`; return; }
+  if (UI.view === "status") app.innerHTML = banner + statusHTML();
+  else if (UI.view === "history") app.innerHTML = banner + historyHTML();
+  else if (UI.view === "team") app.innerHTML = banner + teamHTML();
+  else if (UI.view === "write") { app.innerHTML = banner + writeShellHTML(); mountWrite(); }
+}
+function bannersHTML() {
+  let h = "";
+  if (Store.note) h += `<div class="banner warn"><span class="grow">${esc(Store.note)}</span></div>`;
+  if (!Store.canWrite) h += `<div class="banner warn"><span class="grow">보기 전용 권한입니다. 보고를 작성하려면 소유자에게 편집(또는 기여자) 권한을 요청하세요.</span></div>`;
+  return h;
+}
+window.addEventListener("hashchange", () => { teamDraft = null; render(); window.scrollTo(0, 0); });
+Store.listeners.add(() => {
+  if (UI.view === "write" && $("#reportForm")) { refreshWriteMembers(); renderMode(); renderClocks(); return; }
+  if (UI.view === "team" && teamDraft && $("#teamRows")) readTeamDraft();
+  render();
+});
+
+/* =========================================================
+   1) 팀 현황
+   ========================================================= */
+function statusHTML() {
+  const demo = isDemo();
+  const data = demo ? (DEMO || (DEMO = buildDemo())) : { team: Store.team, reports: [...Store.reports.values()] };
+  const team = data.team, all = data.reports;
+  const date = UI.date;
+  const day = all.filter(r => r.date === date);
+  const byMember = new Map(day.map(r => [r.memberId, r]));
+  const members = team.members;
+  const extra = day.filter(r => !memberById(team, r.memberId));
+  const submitted = members.filter(m => byMember.has(m.id)).length + extra.length;
+  const expected = members.length + extra.length;
+  let prog = 0, delay = 0, done = 0;
+  day.forEach(r => { const c = countStatus(r); prog += c.진행중; delay += c.지연; done += c.완료; });
+  const since = addDays(date, -30);
+  const openIssues = [];
+  all.filter(r => r.date <= date && r.date >= since).forEach(r => (r.issues || []).forEach((x, i) => { if (x.content && !x.resolved) openIssues.push({ r, x, i }); }));
+  openIssues.sort((a, b) => LEVELS.indexOf(a.x.level) - LEVELS.indexOf(b.x.level) || (a.r.date < b.r.date ? 1 : -1));
+  const urgent = openIssues.filter(o => o.x.level === "높음").length;
+  const away = day.filter(r => TRIP_TYPES.includes(r.workType));
+  const off = day.filter(r => OFF_TYPES.includes(r.workType)).length;
+  const rate = expected ? Math.round(submitted / expected * 100) : 0;
+  const isToday = date === today();
+
+  let h = "";
+  if (demo) h += `<div class="banner demo"><span class="grow"><b>예시 화면입니다.</b> 저장된 보고가 아직 없어 가상의 팀 데이터로 현황을 보여 줍니다. 팀원이 첫 보고를 제출하면 실제 데이터로 바뀝니다.</span><a class="btn primary sm" href="#write">첫 보고 작성</a><a class="btn sm" href="#team">팀원 등록</a></div>`;
+  h += `<div class="toolbar"><h2>${fmtDateLong(date)}${isToday ? ' <span class="pill p-accent">오늘</span>' : ""}</h2>
+    <button class="btn sm" data-act="day" data-d="-1" aria-label="이전 근무일">◀ 이전</button>
+    <input type="date" id="statusDate" class="date-input" value="${date}" aria-label="날짜 선택">
+    <button class="btn sm" data-act="day" data-d="1" aria-label="다음 근무일">다음 ▶</button>
+    ${isToday ? "" : '<button class="btn sm ghost" data-act="today">오늘로</button>'}
+    <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn sm" data-act="copyDay"${day.length ? "" : " disabled"}>이날 보고 전체 복사</button>
+      <a class="btn primary sm" href="#write">보고 작성</a>
+    </span></div>`;
+  h += `<div class="kpis">
+    <div class="kpi ${rate === 100 ? "ok" : rate >= 60 ? "info" : "warn"}"><span class="k">제출</span><span class="v">${submitted}<small> / ${expected}명</small></span><span class="d">제출률 ${rate}%${off ? ` · 휴가 ${off}명` : ""}</span></div>
+    <div class="kpi info"><span class="k">진행 중 업무</span><span class="v">${prog}</span><span class="d">완료 ${done}건</span></div>
+    <div class="kpi ${delay ? "bad" : ""}"><span class="k">지연 업무</span><span class="v">${delay}</span><span class="d">${delay ? "확인 필요" : "없음"}</span></div>
+    <div class="kpi ${urgent ? "bad" : ""}"><span class="k">미해결 긴급 이슈</span><span class="v">${urgent}</span><span class="d">전체 미해결 ${openIssues.length}건 · 30일</span></div>
+    <div class="kpi"><span class="k">출장·외근</span><span class="v">${away.length}</span><span class="d">${away.length ? away.map(r => esc(r.memberName) + (r.location ? "·" + esc(r.location) : "")).join(", ") : "없음"}</span></div>
+  </div>`;
+
+  // 제출 현황 칩 + 2주 매트릭스
+  const chips = members.map(m => {
+    const r = byMember.get(m.id);
+    if (!r) return `<span class="chip miss"><i></i>${esc(dispName(m))} <span class="t">미제출</span></span>`;
+    const cls = OFF_TYPES.includes(r.workType) ? "off" : "done";
+    return `<button class="chip ${cls}" data-open="${esc(r.id)}" style="cursor:pointer"><i></i>${esc(dispName(m))} <span class="t">${OFF_TYPES.includes(r.workType) ? "휴가" : fmtTime(r.submittedAt)}</span></button>`;
+  }).concat(extra.map(r => `<button class="chip done" data-open="${esc(r.id)}" style="cursor:pointer"><i></i>${esc(r.memberName)} <span class="t">${fmtTime(r.submittedAt)}</span></button>`)).join("");
+  const days = []; let d = isWeekend(date) ? prevWorkday(date) : date;
+  for (let i = 0; i < 10; i++) { days.unshift(d); d = prevWorkday(d); }
+  const index = new Map(all.map(r => [r.date + "__" + r.memberId, r]));
+  const matrix = members.length ? `<div class="matrix-wrap"><table class="matrix"><thead><tr><th></th>${days.map(x => `<th>${parseYmd(x).getMonth() + 1}/${parseYmd(x).getDate()}<br>${DOW[parseYmd(x).getDay()]}</th>`).join("")}</tr></thead><tbody>${members.map(m => `<tr><th class="name">${esc(dispName(m))}</th>${days.map(x => {
+      const r = index.get(x + "__" + m.id);
+      const cls = !r ? "" : OFF_TYPES.includes(r.workType) ? "off" : TRIP_TYPES.includes(r.workType) ? "trip" : "done";
+      return `<td><button class="cell ${cls}${x === date ? " sel" : ""}" data-act="goto" data-d="${x}" title="${esc(m.name)} ${fmtDate(x)}: ${r ? esc(r.workType) + " · 제출" : "미제출"}" aria-label="${esc(m.name)} ${fmtDate(x)} ${r ? "제출" : "미제출"}"></button></td>`;
+    }).join("")}</tr>`).join("")}</tbody></table></div>
+    <div class="legend"><span><span class="cell done"></span>제출</span><span><span class="cell trip"></span>출장·외근</span><span><span class="cell off"></span>휴가</span><span><span class="cell"></span>미제출</span></div>` : `<p class="empty">팀원을 등록하면 근무일별 제출 현황이 표시됩니다.</p>`;
+  h += `<div class="card"><div class="card-h"><h2>제출 현황</h2><span class="meta">이름을 누르면 보고 전문이 열립니다 · 표의 칸을 누르면 그 날짜로 이동합니다</span></div>
+    <div class="chips" style="margin-bottom:14px">${chips || '<span class="empty">등록된 팀원이 없습니다.</span>'}</div>${matrix}</div>`;
+
+  // 팀원별 카드 + 이슈/파이프라인
+  const cards = members.map(m => memberCard(m, byMember.get(m.id), demo)).concat(extra.map(r => memberCard({ id: r.memberId, name: r.memberName, region: r.region }, r, demo))).join("");
+  h += `<div class="grid2"><section class="card" style="padding:16px"><div class="card-h"><h2>팀원별 업무</h2><span class="meta">${fmtDate(date)} 제출분</span></div><div class="members">${cards || '<p class="empty">아직 팀원이 없습니다.</p>'}</div></section>
+    <div style="display:flex;flex-direction:column;gap:16px">${issuesCard(openIssues, demo)}${pipelineCard(all, date)}</div></div>`;
+  return h;
+}
+function memberCard(m, r, demo) {
+  const reg = m.region ? `<span class="r">${esc(m.region)}${m.role ? " · " + esc(m.role) : ""}</span>` : "";
+  if (!r) return `<div class="mcard missing"><div class="who"><b>${esc(dispName(m))}</b>${reg}<span class="t">미제출</span></div></div>`;
+  const wtPill = OFF_TYPES.includes(r.workType) ? "p-info" : TRIP_TYPES.includes(r.workType) ? "p-accent" : "p-idle";
+  const loadPill = r.load === "과중" ? `<span class="pill p-bad">업무량 과중</span>` : r.load === "여유" ? `<span class="pill p-ok">여유</span>` : "";
+  const tasks = (r.tasks || []).filter(t => t.content);
+  const plans = (r.plans || []).filter(t => t.content);
+  const iss = (r.issues || []).filter(x => x.content && !x.resolved);
+  return `<article class="mcard">
+    <div class="who"><b>${esc(r.memberName || dispName(m))}</b>${reg}<span class="pill ${wtPill}">${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</span>${loadPill}<span class="t">${fmtTime(r.submittedAt)}</span></div>
+    ${tasks.length ? `<ul class="tasklist">${tasks.map(t => `<li><span class="pill s-${esc(t.status)}">${esc(t.status)}</span><span><span class="cat">${esc(t.cat)}</span> ${t.client ? `<span class="cl">${esc(t.client)}</span> ` : ""}${esc(t.content)}</span></li>`).join("")}</ul>` : `<p class="empty">${OFF_TYPES.includes(r.workType) ? "휴가" : "등록된 업무 없음"}</p>`}
+    ${plans.length ? `<div><div class="sublabel">다음 근무일</div><ul class="plans">${plans.map(p => `<li>${p.client ? esc(p.client) + " – " : ""}${esc(p.content)}</li>`).join("")}</ul></div>` : ""}
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${iss.length ? iss.map(x => `<span class="pill l-${esc(x.level)}">이슈 ${esc(x.level)}</span>`).join("") : ""}<button class="btn sm ghost" style="margin-left:auto" data-open="${esc(r.id)}">전문 보기</button></div>
+  </article>`;
+}
+function issuesCard(list, demo) {
+  return `<section class="card"><div class="card-h"><h2>이슈·지원 요청</h2><span class="meta">최근 30일 미해결</span></div>
+    ${list.length ? list.slice(0, 12).map(o => `<div class="issue"><span class="pill l-${esc(o.x.level)}">${esc(o.x.level)}</span><div class="body">${esc(o.x.content)}<div class="by">${esc(o.r.memberName)} · ${fmtDate(o.r.date)}${o.x.target ? " · 요청: " + esc(o.x.target) : ""}</div></div>
+      <button class="btn sm" data-act="resolve" data-id="${esc(o.r.id)}" data-i="${o.i}"${demo || !Store.canWrite ? " disabled" : ""}>해결</button></div>`).join("") : `<p class="empty">미해결 이슈가 없습니다.</p>`}
+    ${list.length > 12 ? `<p class="empty">외 ${list.length - 12}건은 보고 이력에서 확인하세요.</p>` : ""}</section>`;
+}
+function latestPipeline(all, upto) {
+  const map = new Map();
+  [...all].filter(r => !upto || r.date <= upto).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.updatedAt || "") < (b.updatedAt || "") ? -1 : 1)
+    .forEach(r => (r.pipeline || []).forEach(p => { if (p.client) map.set(p.client.trim().toLowerCase(), Object.assign({}, p, { by: r.memberName, date: r.date })); }));
+  return [...map.values()].sort((a, b) => STAGES.indexOf(b.stage) - STAGES.indexOf(a.stage));
+}
+function pipelineCard(all, date) {
+  const list = latestPipeline(all, date).filter(p => p.stage !== "실주");
+  const stagePill = s => s === "계약" ? "p-ok" : s === "협상" ? "p-info" : s === "보류" ? "p-idle" : "p-accent";
+  const tot = {};
+  list.filter(p => ACTIVE_STAGES.includes(p.stage) && p.amount).forEach(p => tot[p.currency] = (tot[p.currency] || 0) + Number(p.amount));
+  const won = {};
+  list.filter(p => p.stage === "계약" && p.amount).forEach(p => won[p.currency] = (won[p.currency] || 0) + Number(p.amount));
+  return `<section class="card"><div class="card-h"><h2>영업 파이프라인</h2><span class="meta">거래처별 최신 단계</span></div>
+    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>거래처</th><th>단계</th><th style="text-align:right">예상 금액</th><th>예상 시기</th></tr></thead><tbody>
+      ${list.slice(0, 15).map(p => `<tr title="${esc(p.note || "")}"><td><b>${esc(p.client)}</b><div class="meta" style="color:var(--muted);font-size:12px">${esc(p.country || "")}${p.country ? " · " : ""}${esc(p.by)} ${fmtDate(p.date)}</div></td><td><span class="pill ${stagePill(p.stage)}">${esc(p.stage)}</span></td><td class="n">${p.amount ? esc(p.currency) + " " + fmtAmt(p.amount) : "–"}</td><td class="mono" style="font-size:12px">${esc(p.expected || "–")}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="totals">${Object.keys(tot).length ? `<span>진행 중 합계 ${Object.entries(tot).map(([c, v]) => `<b>${esc(c)} ${fmtAmt(v)}</b>`).join(" · ")}</span>` : ""}${Object.keys(won).length ? `<span>계약 ${Object.entries(won).map(([c, v]) => `<b>${esc(c)} ${fmtAmt(v)}</b>`).join(" · ")}</span>` : ""}</div>`
+    : `<p class="empty">보고서의 ‘영업 파이프라인 변동’에 입력한 거래처가 여기에 모입니다.</p>`}</section>`;
+}
+
+/* =========================================================
+   2) 보고 작성
+   ========================================================= */
+const blank = {
+  tasks: () => ({ cat: TASK_CATS[0], client: "", content: "", status: "완료" }),
+  plans: () => ({ cat: TASK_CATS[0], client: "", content: "" }),
+  pipeline: () => ({ client: "", country: "", stage: "리드", amount: "", currency: "USD", expected: "", note: "" }),
+  issues: () => ({ content: "", level: "보통", target: "", resolved: false })
+};
+const W = { loadedId: null, notice: null };
+function emptyReport() {
+  const me = lsGet("bd-me", "");
+  const m = memberById(Store.team, me);
+  return { date: today(), memberId: m ? m.id : "", memberName: m ? dispName(m) : "", region: m ? m.region : "", workType: "사무실", location: "", load: "적정", tasks: [blank.tasks()], plans: [blank.plans()], pipeline: [], issues: [], notes: "" };
+}
+function writeShellHTML() {
+  return `<div class="write"><form class="form" id="reportForm" novalidate></form>
+    <aside class="preview"><div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div class="card-h" style="margin:0"><h2>메신저용 보고문</h2><span class="right"><button type="button" class="btn sm" id="copyPreview">복사</button></span></div>
+      <pre id="preview" tabindex="0"></pre>
+      <p class="help" style="font-size:12px">제출하면 팀 현황에 바로 반영됩니다. 카카오톡·Slack·Teams 등에 따로 보고해야 할 때는 이 내용을 복사해 붙여넣으세요.</p>
+    </div></aside></div>`;
+}
+function rowHTML(kind, o, i) {
+  const id = `${kind}-${i}`;
+  const del = `<button type="button" class="icon-btn" data-del aria-label="이 행 삭제">×</button>`;
+  if (kind === "tasks") return `<div class="row" data-row="tasks">
+    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${opts(TASK_CATS, o.cat)}</select>
+    <input type="text" id="${id}-client" data-f="client" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
+    <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="한 일 (예: 샘플 피드백 협의)" aria-label="업무 내용">
+    <select id="${id}-status" data-f="status" aria-label="진행 상태">${opts(STATUSES, o.status)}</select>${del}</div>`;
+  if (kind === "plans") return `<div class="row" data-row="plans">
+    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${opts(TASK_CATS, o.cat)}</select>
+    <input type="text" id="${id}-client" data-f="client" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
+    <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="할 일" aria-label="계획 내용">${del}</div>`;
+  if (kind === "pipeline") return `<div class="row" data-row="pipeline">
+    <input type="text" id="${id}-client" data-f="client" value="${esc(o.client)}" placeholder="거래처명" aria-label="거래처명">
+    <input type="text" id="${id}-country" data-f="country" value="${esc(o.country)}" placeholder="국가" aria-label="국가">
+    <select id="${id}-stage" data-f="stage" aria-label="단계">${opts(STAGES, o.stage)}</select>
+    <input type="text" inputmode="decimal" id="${id}-amount" data-f="amount" value="${esc(o.amount === "" || o.amount == null ? "" : fmtAmt(o.amount))}" placeholder="예상 금액" aria-label="예상 금액" class="num">
+    <select id="${id}-currency" data-f="currency" aria-label="통화">${opts(CURRENCIES, o.currency)}</select>
+    <input type="month" id="${id}-expected" data-f="expected" value="${esc(o.expected)}" aria-label="예상 계약 시기">${del}
+    <input type="text" id="${id}-note" data-f="note" value="${esc(o.note)}" placeholder="메모 (선택)" aria-label="메모" style="grid-column:1 / -2"></div>`;
+  if (kind === "issues") return `<div class="row${o.resolved ? " resolved" : ""}" data-row="issues">
+    <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="이슈 또는 필요한 지원" aria-label="이슈 내용">
+    <select id="${id}-level" data-f="level" aria-label="긴급도">${opts(LEVELS, o.level)}</select>
+    <input type="text" id="${id}-target" data-f="target" value="${esc(o.target)}" list="targetList" placeholder="요청 대상" aria-label="요청 대상">
+    <input type="hidden" data-f="resolved" value="${o.resolved ? "1" : ""}">${del}</div>`;
+}
+const HEADS = {
+  tasks: ["구분", "거래처 / 프로젝트", "내용", "상태", ""],
+  plans: ["구분", "거래처 / 프로젝트", "할 일", ""],
+  pipeline: ["거래처", "국가", "단계", "예상 금액", "통화", "예상 시기", ""],
+  issues: ["내용", "긴급도", "요청 대상", ""]
+};
+function rowsBlock(kind, items) {
+  return `<div class="row-head" style="grid-template-columns:${getComputedStyleCols(kind)}">${HEADS[kind].map(x => `<span>${x}</span>`).join("")}</div>
+    <div class="rows" id="rows-${kind}">${items.map((o, i) => rowHTML(kind, o, i)).join("")}</div>`;
+}
+function getComputedStyleCols(kind) {
+  return { tasks: "150px 180px minmax(0,1fr) 100px 30px", plans: "150px 180px minmax(0,1fr) 30px", pipeline: "minmax(0,1.3fr) 110px 120px 120px 84px 130px 30px", issues: "minmax(0,1fr) 90px 150px 30px" }[kind];
+}
+function memberOptions(sel) {
+  const ms = Store.team.members;
+  return `<option value="">선택하세요</option>${ms.map(m => `<option value="${esc(m.id)}"${m.id === sel ? " selected" : ""}>${esc(dispName(m))}${m.region ? " · " + esc(m.region) : ""}</option>`).join("")}<option value="__new"${sel === "__new" ? " selected" : ""}>+ 처음 작성합니다 (이름 등록)</option>`;
+}
+function formHTML(r) {
+  const seg = (name, list, val) => `<div class="seg" role="radiogroup" aria-label="${name === "workType" ? "근무 형태" : "업무량"}">${list.map((v, i) => `<input type="radio" name="${name}" id="${name}-${i}" value="${v}"${v === val ? " checked" : ""}><label for="${name}-${i}">${v}</label>`).join("")}</div>`;
+  const noMembers = Store.team.members.length === 0;
+  const memberSel = r.memberId || (noMembers ? "__new" : "");
+  return `
+  <div id="f-notice" class="notice${W.notice ? "" : " hidden"}${W.notice && W.notice.kind ? " " + W.notice.kind : ""}">${W.notice ? W.notice.html : ""}</div>
+  <section class="sec"><div class="sec-h"><span class="no">01</span><h2>기본 정보</h2></div>
+    <div class="fields">
+      <label class="fl"><span>작성일 <em>*</em></span><input type="date" id="f-date" value="${esc(r.date)}" required></label>
+      <label class="fl"><span>작성자 <em>*</em></span><select id="f-member">${memberOptions(memberSel)}</select></label>
+      <label class="fl${memberSel === "__new" ? "" : " hidden"}" id="newNameWrap"><span>이름 <em>*</em></span><input type="text" id="f-newname" placeholder="예: 김도윤" autocomplete="name"></label>
+      <label class="fl"><span>담당 지역</span><select id="f-region"><option value="">선택</option>${REGIONS.map(x => `<option${x.k === r.region ? " selected" : ""}>${x.k}</option>`).join("")}</select></label>
+      <div class="fl span2"><span>근무 형태</span>${seg("workType", WORK_TYPES, r.workType)}</div>
+      <label class="fl${TRIP_TYPES.includes(r.workType) ? "" : " hidden"}" id="locWrap"><span>출장지·방문지</span><input type="text" id="f-location" value="${esc(r.location)}" placeholder="예: 두바이"></label>
+      <div class="fl"><span>업무량</span>${seg("load", LOADS, r.load || "적정")}</div>
+    </div></section>
+  <section class="sec"><div class="sec-h"><span class="no">02</span><h2>오늘 한 일</h2><span class="hint">업무마다 한 줄씩</span><span class="right"><button type="button" class="btn sm" data-act="pullPlans">이전 계획 불러오기</button></span></div>
+    ${rowsBlock("tasks", r.tasks.length ? r.tasks : [blank.tasks()])}
+    <div><button type="button" class="btn sm" data-add="tasks">+ 업무 추가</button></div></section>
+  <section class="sec"><div class="sec-h"><span class="no">03</span><h2>다음 근무일 계획</h2></div>
+    ${rowsBlock("plans", r.plans.length ? r.plans : [blank.plans()])}
+    <div><button type="button" class="btn sm" data-add="plans">+ 계획 추가</button></div></section>
+  <section class="sec"><div class="sec-h"><span class="no">04</span><h2>영업 파이프라인 변동</h2><span class="hint">새 거래처나 단계·금액이 바뀐 건만 (선택)</span></div>
+    ${r.pipeline.length ? rowsBlock("pipeline", r.pipeline) : `<div class="row-head hidden" style="grid-template-columns:${getComputedStyleCols("pipeline")}">${HEADS.pipeline.map(x => `<span>${x}</span>`).join("")}</div><div class="rows" id="rows-pipeline"></div>`}
+    <div><button type="button" class="btn sm" data-add="pipeline">+ 거래처 추가</button></div></section>
+  <section class="sec"><div class="sec-h"><span class="no">05</span><h2>이슈·지원 요청</h2><span class="hint">의사결정이나 타 부서 도움이 필요한 일 (선택)</span></div>
+    ${r.issues.length ? rowsBlock("issues", r.issues) : `<div class="row-head hidden" style="grid-template-columns:${getComputedStyleCols("issues")}">${HEADS.issues.map(x => `<span>${x}</span>`).join("")}</div><div class="rows" id="rows-issues"></div>`}
+    <div><button type="button" class="btn sm" data-add="issues">+ 이슈 추가</button></div></section>
+  <section class="sec"><div class="sec-h"><span class="no">06</span><h2>공유 사항</h2><span class="hint">시장 동향, 환율·물류비, 경쟁사 소식 등 (선택)</span></div>
+    <textarea id="f-notes" aria-label="공유 사항" placeholder="예: 두바이 현지 내륙 운송비가 전월 대비 약 8% 올랐습니다.">${esc(r.notes)}</textarea></section>
+  <datalist id="targetList">${[leaderLabel(Store.team)].concat(Store.team.members.map(dispName), ISSUE_TARGETS).filter(Boolean).map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+  <ul class="errs hidden" id="f-errs"></ul>
+  <div class="submit-bar"><span class="grow help" id="f-state"></span>
+    <button type="button" class="btn" data-act="resetForm">새로 작성</button>
+    <button type="submit" class="btn primary" id="f-submit"${Store.canWrite ? "" : " disabled"}>${W.loadedId ? "수정 내용 저장" : "보고 제출"}</button></div>`;
+}
+function mountWrite() {
+  let r = null;
+  W.loadedId = null; W.notice = null;
+  if (UI.editId && Store.reports.get(UI.editId)) {
+    r = clone(Store.reports.get(UI.editId)); W.loadedId = r.id;
+    W.notice = { html: `${esc(r.memberName)}님의 ${fmtDate(r.date)} 보고를 불러왔습니다. 수정 후 저장하면 덮어씁니다.` };
+    UI.editId = null;
+  } else {
+    const draft = lsGet("bd-draft", null);
+    if (draft && draft.date === today()) { r = Object.assign(emptyReport(), draft); W.notice = { html: "작성 중이던 내용을 이어서 불러왔습니다." }; }
+    else r = emptyReport();
+  }
+  fillForm(r);
+  if (!W.loadedId) checkExisting(true);
+}
+function fillForm(r) {
+  const f = $("#reportForm"); if (!f) return;
+  f.innerHTML = formHTML(r);
+  updatePreview();
+}
+function refreshWriteMembers() {
+  const sel = $("#f-member"); if (!sel) return;
+  let v = sel.value;
+  if (v === "__new" && Store.team.members.length && !$("#f-newname").value.trim()) {
+    const me = memberById(Store.team, lsGet("bd-me", ""));
+    v = me ? me.id : "";
+  }
+  sel.innerHTML = memberOptions(v || (Store.team.members.length ? "" : "__new"));
+  if (v && [...sel.options].some(o => o.value === v)) sel.value = v;
+  $("#newNameWrap").classList.toggle("hidden", sel.value !== "__new");
+}
+function readForm() {
+  const f = $("#reportForm");
+  const g = id => { const el = f.querySelector("#" + id); return el ? el.value : ""; };
+  const r = {
+    date: g("f-date"), memberSel: g("f-member"), newName: g("f-newname").trim(), region: g("f-region"),
+    workType: (f.querySelector("input[name=workType]:checked") || {}).value || "사무실",
+    location: g("f-location").trim(), load: (f.querySelector("input[name=load]:checked") || {}).value || "적정",
+    notes: g("f-notes").trim()
+  };
+  if (!TRIP_TYPES.includes(r.workType)) r.location = "";
+  ["tasks", "plans", "pipeline", "issues"].forEach(k => {
+    r[k] = $$(`[data-row="${k}"]`, f).map(row => { const o = {}; $$("[data-f]", row).forEach(el => o[el.dataset.f] = el.value.trim()); return o; });
+  });
+  r.issues.forEach(x => x.resolved = x.resolved === "1");
+  r.pipeline.forEach(p => { const n = Number(String(p.amount).replace(/[^0-9.]/g, "")); p.amount = p.amount === "" || isNaN(n) ? "" : n; });
+  const m = memberById(Store.team, r.memberSel);
+  r.memberId = m ? m.id : ""; r.memberName = m ? dispName(m) : r.newName;
+  return r;
+}
+function cleanReport(r) {
+  const o = { date: r.date, memberId: r.memberId, memberName: r.memberName, region: r.region, workType: r.workType, location: r.location, load: r.load, notes: r.notes };
+  o.tasks = r.tasks.filter(t => t.content || t.client);
+  o.plans = r.plans.filter(t => t.content || t.client);
+  o.pipeline = r.pipeline.filter(p => p.client);
+  o.issues = r.issues.filter(x => x.content);
+  return o;
+}
+function updatePreview() {
+  if (!$("#reportForm")) return;
+  const r = readForm();
+  $("#preview").textContent = reportText(cleanReport(r), Store.team.teamName);
+  if (!W.loadedId) lsSet("bd-draft", Object.assign({}, r, { memberId: r.memberSel === "__new" ? "" : r.memberId }));
+}
+function checkExisting(silent) {
+  const r = readForm();
+  const id = r.memberId ? `${r.date}__${r.memberId}` : null;
+  const ex = id && Store.reports.get(id);
+  if (ex && W.loadedId !== id) {
+    W.loadedId = id;
+    W.notice = { html: `${fmtDate(ex.date)}에 이미 제출한 보고가 있어 불러왔습니다 (제출 ${fmtTime(ex.submittedAt)}). 수정 후 저장하면 덮어씁니다.` };
+    fillForm(clone(ex));
+  } else if (!ex && W.loadedId && W.loadedId !== id) {
+    W.loadedId = null; W.notice = null;
+    const fresh = emptyReport(); fresh.date = r.date; fresh.memberId = r.memberId; fresh.region = r.region || (memberById(Store.team, r.memberId) || {}).region || "";
+    fillForm(fresh);
+  }
+}
+function setNotice(html, kind) {
+  W.notice = html ? { html, kind } : null;
+  const n = $("#f-notice"); if (!n) return;
+  n.className = "notice" + (kind ? " " + kind : "") + (html ? "" : " hidden");
+  n.innerHTML = html || "";
+}
+async function submitReport() {
+  const r = readForm();
+  const errs = [];
+  if (!r.date) errs.push("작성일을 선택하세요.");
+  if (!r.memberSel) errs.push("작성자를 선택하세요.");
+  if (r.memberSel === "__new" && !r.newName) errs.push("처음 작성하는 경우 이름을 입력하세요.");
+  const c = cleanReport(r);
+  if (!OFF_TYPES.includes(r.workType) && !c.tasks.some(t => t.content)) errs.push("‘오늘 한 일’을 한 줄 이상 적어 주세요.");
+  const el = $("#f-errs");
+  el.innerHTML = errs.map(e => `<li>${esc(e)}</li>`).join(""); el.classList.toggle("hidden", !errs.length);
+  if (errs.length) { el.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+  const btn = $("#f-submit"); btn.disabled = true; $("#f-state").textContent = "저장하는 중…";
+  try {
+    let m = memberById(Store.team, r.memberSel);
+    if (!m) {
+      const same = Store.team.members.find(x => x.name === r.newName);
+      m = same || { id: newId(), name: r.newName, region: r.region, role: "" };
+      if (!same) await backend.saveTeam(Object.assign({}, Store.team, { teamName: Store.team.teamName || CFG.TEAM_NAME, members: [...Store.team.members, m] }));
+    } else if (r.region && m.region !== r.region && !m.region) {
+      await backend.saveTeam(Object.assign({}, Store.team, { members: Store.team.members.map(x => x.id === m.id ? Object.assign({}, x, { region: r.region }) : x) }));
+    }
+    c.memberId = m.id; c.memberName = dispName(m);
+    c.id = `${c.date}__${m.id}`;
+    const prev = Store.reports.get(c.id);
+    const now = new Date().toISOString();
+    c.submittedAt = (prev && prev.submittedAt) || now; c.updatedAt = now;
+    await backend.saveReport(c);
+    lsSet("bd-me", m.id); lsDel("bd-draft");
+    W.loadedId = c.id;
+    $("#f-errs").classList.add("hidden");
+    refreshWriteMembers(); $("#f-member").value = m.id; $("#newNameWrap").classList.add("hidden");
+    setNotice(`${prev ? "수정 내용을 저장했습니다" : "제출했습니다"} (${fmtTime(now)}). <a href="#status">팀 현황 보기</a>`, "ok");
+    btn.textContent = "수정 내용 저장";
+    $("#f-state").textContent = "";
+    toast(prev ? "보고를 수정했습니다." : "보고를 제출했습니다.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    $("#f-state").textContent = "";
+    setNotice(esc(e.message || "저장하지 못했습니다. 잠시 후 다시 시도하세요."), "bad");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } finally { btn.disabled = !Store.canWrite; }
+}
+function pullPrevPlans() {
+  const r = readForm();
+  if (!r.memberId) { setNotice("작성자를 먼저 선택하세요.", "bad"); return; }
+  const prev = [...Store.reports.values()].filter(x => x.memberId === r.memberId && x.date < r.date).sort((a, b) => a.date < b.date ? 1 : -1)[0];
+  if (!prev || !(prev.plans || []).length) { setNotice("가져올 이전 계획이 없습니다.", null); return; }
+  const rows = $("#rows-tasks");
+  const existing = $$('[data-row="tasks"]', rows).filter(row => row.querySelector('[data-f="content"]').value.trim() || row.querySelector('[data-f="client"]').value.trim());
+  if (!existing.length) rows.innerHTML = "";
+  let i = $$('[data-row="tasks"]', rows).length;
+  prev.plans.forEach(p => rows.insertAdjacentHTML("beforeend", rowHTML("tasks", { cat: p.cat || "기타", client: p.client, content: p.content, status: "진행중" }, i++)));
+  setNotice(`${fmtDate(prev.date)} 보고의 계획 ${prev.plans.length}건을 ‘오늘 한 일’에 넣었습니다. 상태를 확인해 주세요.`, null);
+  updatePreview();
+}
+
+/* =========================================================
+   3) 보고 이력
+   ========================================================= */
+function filteredHistory() {
+  const H = UI.hist; const q = H.q.trim().toLowerCase();
+  return [...Store.reports.values()].filter(r =>
+    (!H.member || r.memberId === H.member) && (!H.from || r.date >= H.from) && (!H.to || r.date <= H.to) &&
+    (!q || JSON.stringify([r.memberName, r.tasks, r.plans, r.pipeline, r.issues, r.notes, r.location]).toLowerCase().includes(q))
+  ).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (a.memberName || "").localeCompare(b.memberName || "", "ko"));
+}
+function historyHTML() {
+  const H = UI.hist; const list = filteredHistory();
+  const names = new Map(Store.team.members.map(m => [m.id, dispName(m)]));
+  [...Store.reports.values()].forEach(r => { if (!names.has(r.memberId)) names.set(r.memberId, r.memberName); });
+  return `<section class="card"><div class="card-h"><h2>보고 이력</h2><span class="meta">${list.length}건</span>
+      <span class="right"><button class="btn sm" data-act="exportTasks"${list.length ? "" : " disabled"}>업무 내역 CSV</button><button class="btn sm" data-act="exportSummary"${list.length ? "" : " disabled"}>보고 요약 CSV</button><button class="btn sm" data-act="exportJson">전체 백업(JSON)</button><label class="btn sm" for="importFile">백업 불러오기</label><input type="file" id="importFile" accept=".json,application/json" class="hidden"></span></div>
+    <div class="filters" style="margin-bottom:14px">
+      <label class="fl"><span>작성자</span><select id="h-member"><option value="">전체</option>${[...names].map(([id, n]) => `<option value="${esc(id)}"${id === H.member ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+      <label class="fl"><span>시작일</span><input type="date" id="h-from" value="${esc(H.from)}"></label>
+      <label class="fl"><span>종료일</span><input type="date" id="h-to" value="${esc(H.to)}"></label>
+      <label class="fl"><span>검색</span><input type="search" id="h-q" value="${esc(H.q)}" placeholder="거래처, 내용, 출장지…"></label>
+    </div>
+    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>작성자</th><th>지역</th><th>근무</th><th>주요 업무</th><th style="text-align:right">완료</th><th style="text-align:right">진행</th><th style="text-align:right">지연</th><th>이슈</th><th>제출</th></tr></thead><tbody>
+      ${list.slice(0, 300).map(r => { const c = countStatus(r); const iss = (r.issues || []).filter(x => !x.resolved); const first = (r.tasks || [])[0];
+        return `<tr class="click" data-open="${esc(r.id)}" tabindex="0"><td class="mono" style="white-space:nowrap">${fmtDate(r.date)}</td><td><b>${esc(r.memberName)}</b></td><td>${esc(r.region || "")}</td><td>${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</td>
+        <td>${first ? (first.client ? `<b>${esc(first.client)}</b> ` : "") + esc(first.content) + ((r.tasks || []).length > 1 ? ` <span style="color:var(--muted)">외 ${(r.tasks || []).length - 1}건</span>` : "") : '<span style="color:var(--muted)">–</span>'}</td>
+        <td class="n">${c.완료}</td><td class="n">${c.진행중 + c.대기}</td><td class="n" style="${c.지연 ? "color:var(--bad);font-weight:600" : ""}">${c.지연}</td>
+        <td>${iss.map(x => `<span class="pill l-${esc(x.level)}">${esc(x.level)}</span>`).join(" ")}</td><td class="mono" style="font-size:12px">${fmtTime(r.submittedAt)}</td></tr>`; }).join("")}
+    </tbody></table></div>${list.length > 300 ? `<p class="empty">최근 300건만 표시합니다. 기간을 좁혀 보세요.</p>` : ""}`
+    : `<p class="empty">${Store.reports.size ? "조건에 맞는 보고가 없습니다. 기간이나 검색어를 바꿔 보세요." : "아직 제출된 보고가 없습니다. ‘보고 작성’에서 첫 보고를 제출하세요."}</p>`}
+  </section>`;
+}
+function csvCell(v) { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
+function toCSV(rows) { return "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\r\n"); }
+function exportTasks() {
+  const rows = [["날짜", "작성자", "지역", "근무형태", "구분", "거래처/프로젝트", "내용", "상태"]];
+  filteredHistory().forEach(r => (r.tasks || []).forEach(t => rows.push([r.date, r.memberName, r.region, r.workType, t.cat, t.client, t.content, t.status])));
+  offerFile(`일일보고_업무내역_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
+}
+function exportSummary() {
+  const rows = [["날짜", "작성자", "지역", "근무형태", "출장지", "업무량", "완료", "진행중", "대기", "지연", "오늘 한 일", "다음 계획", "파이프라인", "이슈", "공유 사항", "제출 시각", "수정 시각"]];
+  filteredHistory().forEach(r => { const c = countStatus(r);
+    rows.push([r.date, r.memberName, r.region, r.workType, r.location, r.load, c.완료, c.진행중, c.대기, c.지연,
+      (r.tasks || []).map(t => `[${t.status}] ${t.client ? t.client + " – " : ""}${t.content}`).join("\n"),
+      (r.plans || []).map(t => `${t.client ? t.client + " – " : ""}${t.content}`).join("\n"),
+      (r.pipeline || []).map(p => `${p.client} ${p.stage} ${p.amount ? p.currency + " " + p.amount : ""}`).join("\n"),
+      (r.issues || []).map(x => `[${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`).join("\n"),
+      r.notes, r.submittedAt, r.updatedAt]); });
+  offerFile(`일일보고_요약_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
+}
+function exportJson() {
+  offerFile(`일일보고_백업_${today()}.json`, JSON.stringify({ app: "bd-daily-report", version: 1, exportedAt: new Date().toISOString(), team: Store.team, reports: [...Store.reports.values()] }, null, 2));
+}
+function importJson(file) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    let o; try { o = JSON.parse(fr.result); } catch (e) { toast("JSON 파일을 읽지 못했습니다."); return; }
+    const reports = Array.isArray(o.reports) ? o.reports.filter(r => r && r.id && r.date) : [];
+    const members = o.team && Array.isArray(o.team.members) ? o.team.members : [];
+    openModal(`<div class="modal-h"><h2>백업 불러오기</h2></div>
+      <p>팀원 ${members.length}명, 보고 ${reports.length}건을 현재 저장소(${$("#modeBadge span").textContent})에 합칩니다. 같은 날짜·작성자의 보고는 백업 내용으로 바뀝니다.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" data-act="closeModal">취소</button><button class="btn primary" id="doImport">불러오기</button></div>`);
+    $("#doImport").onclick = async () => {
+      $("#doImport").disabled = true; $("#doImport").textContent = "불러오는 중…";
+      try {
+        const map = new Map(Store.team.members.map(m => [m.id, m]));
+        members.forEach(m => { if (m && m.id && m.name && !map.has(m.id)) map.set(m.id, m); });
+        await backend.saveTeam({ teamName: Store.team.teamName || (o.team && o.team.teamName) || CFG.TEAM_NAME, members: [...map.values()] });
+        for (const r of reports) await backend.saveReport(r);
+        closeModal(); toast(`보고 ${reports.length}건을 불러왔습니다.`);
+      } catch (e) { closeModal(); toast(e.message || "불러오지 못했습니다."); }
+    };
+  };
+  fr.readAsText(file);
+}
+
+/* =========================================================
+   4) 팀원·설정
+   ========================================================= */
+let teamDraft = null;
+function teamHTML() {
+  if (!teamDraft) teamDraft = clone(Store.team);
+  const modeHelp = {
+    claude: `<p>지금은 <b>Claude 아티팩트의 팀 공유 저장소</b>를 쓰고 있습니다. 이 페이지 링크를 공유받은 팀원이 작성하면 모두에게 실시간으로 보입니다.</p>
+      <ol><li>오른쪽 위 <b>공유</b>에서 팀원을 초대하세요. 보고를 작성하려면 팀원에게 <b>편집</b> 권한(Team·Enterprise 요금제는 조직 구성원에게 <b>기여자</b> 이상)이 필요합니다.</li><li>보기만 하는 분은 보기 권한으로 충분합니다.</li></ol>`,
+    sheets: `<p>지금은 <b>Google Sheets</b>를 공유 저장소로 쓰고 있습니다. 이 페이지 <b>링크를 받은 사람은 누구나 로그인 없이 보고를 작성·수정</b>할 수 있고, 1분마다 새 보고를 가져옵니다. 시트에서 원본 데이터를 직접 볼 수 있습니다.</p>`,
+    local: `<p>지금은 <b>이 브라우저에만 저장</b>되고 있어 다른 팀원과 공유되지 않습니다. 팀 전체가 쓰려면 둘 중 하나를 고르세요.</p>
+      <ol><li><b>Claude 아티팩트</b>로 열고 공유: 별도 설정 없이 공유 저장소가 켜집니다.</li><li><b>GitHub Pages + Google Sheets</b>: 저장소의 <code>apps-script/Code.gs</code>를 Google Apps Script로 배포한 뒤, 웹 앱 주소를 <code>config.js</code>의 <code>SHEETS_API_URL</code>에 넣으세요. 자세한 순서는 README에 있습니다.</li></ol>`
+  }[Store.mode] || "";
+  return `<div class="grid2">
+  <section class="card"><div class="card-h"><h2>팀원 관리</h2><span class="meta">${teamDraft.members.length}명 · 처음 작성하는 팀원은 보고 작성 화면에서 스스로 등록할 수도 있습니다</span></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <label class="fl" style="flex:1 1 200px;max-width:280px"><span>팀 이름</span><input type="text" id="t-name" value="${esc(teamDraft.teamName || "")}" placeholder="해외사업팀"></label>
+        <label class="fl" style="flex:1 1 140px;max-width:200px"><span>팀장</span><input type="text" id="t-leader" value="${esc((teamDraft.leader || {}).name || "")}" placeholder="이름"></label>
+        <label class="fl" style="flex:0 1 110px"><span>팀장 직급</span><select id="t-leader-title">${opts(TITLES, (teamDraft.leader || {}).title || "상무")}</select></label>
+      </div>
+      <p class="help" style="font-size:12px">팀장은 일일보고 제출 대상에서 빠지고, 이슈의 요청 대상 목록에 들어갑니다.</p>
+      <div class="team-row row-head" style="grid-template-columns:minmax(0,1fr) 92px 130px minmax(0,1fr) 30px"><span>이름</span><span>직급</span><span>담당 지역</span><span>담당 국가·업무</span><span></span></div>
+      <div class="rows" id="teamRows">${teamDraft.members.map((m, i) => `<div class="team-row" data-mi="${i}">
+        <input type="text" id="tm-${i}-name" data-t="name" value="${esc(m.name)}" aria-label="이름" placeholder="이름">
+        <select id="tm-${i}-title" data-t="title" aria-label="직급"><option value="">-</option>${opts(TITLES, m.title || "")}</select>
+        <select id="tm-${i}-region" data-t="region" aria-label="담당 지역"><option value="">선택</option>${REGIONS.map(x => `<option${x.k === m.region ? " selected" : ""}>${x.k}</option>`).join("")}</select>
+        <input type="text" id="tm-${i}-role" data-t="role" value="${esc(m.role || "")}" aria-label="담당 국가 또는 업무" placeholder="예: UAE·사우디">
+        <button type="button" class="icon-btn" data-act="rmMember" data-i="${i}" aria-label="${esc(m.name)} 삭제">×</button></div>`).join("") || '<p class="empty">등록된 팀원이 없습니다.</p>'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="addMember">+ 팀원 추가</button><span style="flex:1"></span>
+        <button class="btn sm" data-act="resetTeam">되돌리기</button><button class="btn primary sm" data-act="saveTeam"${Store.canWrite ? "" : " disabled"}>팀원 목록 저장</button></div>
+      <p class="help" style="font-size:12px">팀원을 지워도 그 팀원이 낸 보고는 이력에 남습니다. 현지 시각 표시는 담당 지역 기준입니다.</p>
+    </div></section>
+  <section class="card"><div class="card-h"><h2>저장 방식</h2><span class="pill ${Store.mode === "local" ? "p-warn" : "p-ok"}">${esc($("#modeBadge span").textContent)}</span></div>
+    <div class="help">${modeHelp}</div>
+    <div class="card-h" style="margin-top:18px"><h2>입력 항목 기준</h2></div>
+    <div class="help"><p><b>업무 구분</b> ${TASK_CATS.join(" · ")}</p><p style="margin-top:6px"><b>진행 상태</b> ${STATUSES.join(" · ")}</p><p style="margin-top:6px"><b>파이프라인 단계</b> ${STAGES.join(" → ")}</p><p style="margin-top:6px"><b>이슈 긴급도</b> 높음(오늘 결정 필요) · 보통(이번 주) · 낮음(참고)</p>
+    <p style="margin-top:8px;font-size:12px">항목을 바꾸려면 index.html 상단의 상수(TASK_CATS, STAGES 등)를 수정하세요.</p></div></section></div>`;
+}
+function readTeamDraft() {
+  const name = $("#t-name"); if (name) teamDraft.teamName = name.value.trim();
+  const ln = $("#t-leader"); if (ln) teamDraft.leader = ln.value.trim() ? { name: ln.value.trim(), title: $("#t-leader-title").value } : null;
+  $$("#teamRows .team-row").forEach(row => { const i = Number(row.dataset.mi); const m = teamDraft.members[i]; if (!m) return; $$("[data-t]", row).forEach(el => m[el.dataset.t] = el.value.trim()); });
+}
+
+/* =========================================================
+   보고 상세 모달
+   ========================================================= */
+function openModal(html) {
+  $("#modalRoot").innerHTML = `<div class="overlay" data-act="overlay"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const first = $("#modalRoot button, #modalRoot textarea"); if (first) first.focus();
+}
+function closeModal() { $("#modalRoot").innerHTML = ""; }
+function showTextModal(filename, text) {
+  openModal(`<div class="modal-h"><h2>${esc(filename)}</h2><span class="right"><button class="btn sm primary" id="copyModal">복사</button><button class="btn sm" data-act="closeModal">닫기</button></span></div>
+    <p class="help">이 화면에서는 파일 저장이 막혀 있습니다. 내용을 복사해 메모장에 붙여넣고 같은 이름으로 저장하세요.</p><textarea id="modalText" readonly>${esc(text)}</textarea>`);
+  $("#copyModal").onclick = () => copyText(text, $("#modalText"));
+}
+function findReport(id) {
+  if (Store.reports.has(id)) return { r: Store.reports.get(id), demo: false };
+  if (DEMO) { const r = DEMO.reports.find(x => x.id === id); if (r) return { r, demo: true }; }
+  return null;
+}
+function openReport(id) {
+  const f = findReport(id); if (!f) return;
+  const r = f.r; const txt = reportText(r, Store.team.teamName);
+  openModal(`<div class="modal-h"><h2>${esc(r.memberName)} · ${fmtDateLong(r.date)}</h2><span class="right">
+      <button class="btn sm" id="mCopy">복사</button>
+      ${f.demo ? "" : `<button class="btn sm" data-act="editReport" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>수정</button><button class="btn sm danger" data-act="askDelete" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>삭제</button>`}
+      <button class="btn sm" data-act="closeModal">닫기</button></span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)"><span>제출 ${fmtTime(r.submittedAt)}</span>${r.updatedAt && r.updatedAt !== r.submittedAt ? `<span>· 최종 수정 ${new Date(r.updatedAt).toLocaleString("ko-KR")}</span>` : ""}${f.demo ? '<span class="pill p-accent">예시</span>' : ""}</div>
+    <pre id="mText" style="margin:0;white-space:pre-wrap;font-family:var(--font-body);font-size:13px;line-height:1.65;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px">${esc(txt)}</pre>
+    <div id="mConfirm"></div>`);
+  $("#mCopy").onclick = () => copyText(txt, $("#mText"));
+}
+
+/* =========================================================
+   이벤트
+   ========================================================= */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-act],[data-open],[data-add],[data-del]");
+  if (!t) return;
+  if (t.dataset.act === "overlay" && e.target !== t) return;
+  if (t.hasAttribute("data-open") && !t.dataset.act) { openReport(t.dataset.open); return; }
+  if (t.hasAttribute("data-add")) {
+    const k = t.dataset.add; const box = $("#rows-" + k);
+    const head = box.previousElementSibling; if (head && head.classList.contains("row-head")) head.classList.remove("hidden");
+    box.insertAdjacentHTML("beforeend", rowHTML(k, blank[k](), box.children.length + Date.now() % 1000));
+    const last = box.lastElementChild.querySelector("input[type=text]"); if (last) last.focus();
+    updatePreview(); return;
+  }
+  if (t.hasAttribute("data-del")) {
+    const row = t.closest(".row"); const box = row.parentElement; row.remove();
+    if (!box.children.length && (box.id === "rows-tasks" || box.id === "rows-plans")) { const k = box.id.slice(5); box.insertAdjacentHTML("beforeend", rowHTML(k, blank[k](), Date.now() % 1000)); }
+    updatePreview(); return;
+  }
+  const a = t.dataset.act;
+  if (a === "day") { const n = Number(t.dataset.d); UI.date = n < 0 ? prevWorkday(UI.date) : nextWorkday(UI.date); render(); }
+  else if (a === "today") { UI.date = today(); render(); }
+  else if (a === "goto") { UI.date = t.dataset.d; render(); }
+  else if (a === "copyDay") {
+    const data = isDemo() ? DEMO : { reports: [...Store.reports.values()] };
+    const txt = data.reports.filter(r => r.date === UI.date).map(r => reportText(r, Store.team.teamName)).join("\n\n────────\n\n");
+    copyText(txt);
+  }
+  else if (a === "resolve") {
+    const r = Store.reports.get(t.dataset.id); if (!r) return;
+    const c = clone(r); const i = Number(t.dataset.i); if (!c.issues[i]) return;
+    c.issues[i].resolved = true; c.issues[i].resolvedAt = new Date().toISOString();
+    t.disabled = true;
+    try { await backend.saveReport(c); toast("해결 처리했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
+  }
+  else if (a === "pullPlans") pullPrevPlans();
+  else if (a === "resetForm") { W.loadedId = null; W.notice = null; lsDel("bd-draft"); fillForm(emptyReport()); checkExisting(); }
+  else if (a === "exportTasks") exportTasks();
+  else if (a === "exportSummary") exportSummary();
+  else if (a === "exportJson") exportJson();
+  else if (a === "addMember") { readTeamDraft(); teamDraft.members.push({ id: newId(), name: "", title: "", region: "", role: "" }); render(); const rows = $$("#teamRows .team-row"); if (rows.length) rows[rows.length - 1].querySelector("input").focus(); }
+  else if (a === "rmMember") { readTeamDraft(); teamDraft.members.splice(Number(t.dataset.i), 1); render(); }
+  else if (a === "resetTeam") { teamDraft = clone(Store.team); render(); }
+  else if (a === "saveTeam") {
+    readTeamDraft();
+    const t2 = { teamName: teamDraft.teamName || CFG.TEAM_NAME, leader: teamDraft.leader || null, members: teamDraft.members.filter(m => m.name) };
+    t.disabled = true;
+    try { await backend.saveTeam(t2); teamDraft = clone(t2); toast("팀원 목록을 저장했습니다."); render(); } catch (err) { t.disabled = false; toast(err.message); }
+  }
+  else if (a === "closeModal" || a === "overlay") closeModal();
+  else if (a === "editReport") { UI.editId = t.dataset.id; closeModal(); if (location.hash === "#write") render(); else location.hash = "write"; }
+  else if (a === "askDelete") {
+    $("#mConfirm").innerHTML = `<div class="notice bad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1">이 보고를 삭제할까요? 되돌릴 수 없습니다.</span><button class="btn sm" data-act="cancelDelete">취소</button><button class="btn sm danger" data-act="doDelete" data-id="${esc(t.dataset.id)}">삭제</button></div>`;
+  }
+  else if (a === "cancelDelete") $("#mConfirm").innerHTML = "";
+  else if (a === "doDelete") { try { await backend.deleteReport(t.dataset.id); closeModal(); toast("삭제했습니다."); } catch (err) { toast(err.message); } }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("#modalRoot").innerHTML) closeModal();
+  if (e.key === "Enter" && e.target.matches("tr[data-open]")) openReport(e.target.dataset.open);
+});
+document.addEventListener("input", e => {
+  if (e.target.closest("#reportForm")) {
+    if (e.target.dataset.f === "amount") { const v = e.target.value.replace(/[^0-9.]/g, ""); const [i, d] = v.split("."); const f = (i ? Number(i).toLocaleString("en-US") : "") + (d != null ? "." + d : ""); if (f !== e.target.value) e.target.value = f; }
+    clearTimeout(updatePreview._t); updatePreview._t = setTimeout(updatePreview, 150);
+  }
+  if (e.target.id === "h-q") { UI.hist.q = e.target.value; clearTimeout(historyHTML._t); historyHTML._t = setTimeout(() => { const pos = e.target.selectionStart; render(); const q = $("#h-q"); if (q) { q.focus(); q.setSelectionRange(pos, pos); } }, 250); }
+});
+document.addEventListener("change", e => {
+  const id = e.target.id;
+  if (id === "statusDate" && e.target.value) { UI.date = e.target.value; render(); }
+  else if (id === "h-member" || id === "h-from" || id === "h-to") { UI.hist[id.slice(2)] = e.target.value; render(); }
+  else if (id === "importFile" && e.target.files[0]) importJson(e.target.files[0]);
+  else if (id === "f-member") {
+    $("#newNameWrap").classList.toggle("hidden", e.target.value !== "__new");
+    const m = memberById(Store.team, e.target.value);
+    if (m && m.region) $("#f-region").value = m.region;
+    if (e.target.value === "__new") $("#f-newname").focus();
+    checkExisting(); updatePreview();
+  }
+  else if (id === "f-date") { checkExisting(); updatePreview(); }
+  else if (e.target.name === "workType") { $("#locWrap").classList.toggle("hidden", !TRIP_TYPES.includes(e.target.value)); updatePreview(); }
+  else if (e.target.closest && e.target.closest("#reportForm")) updatePreview();
+});
+document.addEventListener("submit", e => { if (e.target.id === "reportForm") { e.preventDefault(); submitReport(); } });
+document.addEventListener("click", e => { if (e.target.id === "copyPreview") copyText($("#preview").textContent, $("#preview")); });
+
+/* =========================================================
+   시작
+   ========================================================= */
+async function boot() {
+  render();
+  setInterval(renderClocks, 30000);
+  if (CFG.SHEETS_API_URL) {
+    backend = SheetsBackend(CFG.SHEETS_API_URL); Store.mode = "sheets";
+    await backend.start(); render(); return;
+  }
+  if (window.claude && typeof window.claude.use === "function") {
+    let db = null;
+    try { db = await window.claude.use("db"); } catch (e) { db = null; }
+    if (db) {
+      backend = ClaudeBackend(db); Store.mode = "claude";
+      try { const u = await window.claude.use("user"); if (u && typeof u.can === "function") { const c = await u.can("data.write"); if (c === false) Store.canWrite = false; } } catch (e) {}
+      render();
+      await backend.start();
+      return;
+    }
+    Store.note = "공유 저장소를 쓸 수 없어 이 브라우저에만 저장합니다. 로그인 상태를 확인하세요.";
+  }
+  backend = LocalBackend; Store.mode = "local";
+  await backend.start(); render();
+}
+boot();
+</script>
+</body>
+</html>
