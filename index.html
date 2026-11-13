@@ -988,7 +988,7 @@ function reportDetailHTML(r) {
       ${x.recommend ? `<div class="rec"><b style="color:var(--accent);margin-right:6px">제안</b>${esc(x.recommend)}</div>` : ""}
       ${x.result ? `<div><b>${esc(st)}:</b> ${esc(x.result)}</div>` : ""}</div>`; }).join(""));
   if (iss.length) h += sec(`이슈·지원 요청 ${iss.length}`, `<ul class="rd-list">${iss.map(x => `<li><span class="pill l-${esc(x.level)}">${esc(x.level)}</span><span style="flex:1${x.resolved ? ";text-decoration:line-through;color:var(--muted)" : ""}">${esc(x.content)}${x.target ? ` <span style="color:var(--muted)">→ ${esc(x.target)}</span>` : ""}</span>${x.resolved ? '<span class="pill p-ok">해결</span>' : ""}</li>`).join("")}</ul>`);
-  h += sec(`오늘 한 일 ${tasks.length}`, tasks.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>구분</th><th>거래처 / 프로젝트</th><th>내용</th><th>상태</th></tr></thead><tbody>${tasks.map(t => `<tr><td style="white-space:nowrap;color:var(--muted)">${esc(normCat(t.cat))}</td><td><b>${esc(t.client || "")}</b></td><td style="white-space:pre-line">${esc(t.content)}</td><td><span class="pill s-${esc(t.status)}">${esc(t.status)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">등록된 업무가 없습니다.</p>`);
+  h += sec(`오늘 한 일 ${tasks.length}`, tasks.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>구분</th><th>고객사 / 프로젝트 / 기타</th><th>내용</th><th>상태</th></tr></thead><tbody>${tasks.map(t => `<tr><td style="white-space:nowrap;color:var(--muted)">${esc(normCat(t.cat))}</td><td><b>${esc(t.client || "")}</b></td><td style="white-space:pre-line">${esc(t.content)}</td><td><span class="pill s-${esc(t.status)}">${esc(t.status)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">등록된 업무가 없습니다.</p>`);
   if (plans.length) h += sec(`다음 근무일 계획 ${plans.length}`, `<ul class="rd-list">${plans.map(p => `<li><span class="pill p-idle">${esc(normCat(p.cat) || "기타")}</span><span>${p.client ? `<b>${esc(p.client)}</b> – ` : ""}${esc(p.content)}</span></li>`).join("")}</ul>`);
   if (pipe.length) h += sec(`영업 파이프라인 변동 ${pipe.length}`, `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>거래처</th><th>국가</th><th>단계</th><th style="text-align:right">예상 금액</th><th>예상 시기</th></tr></thead><tbody>${pipe.map(p => `<tr title="${esc(p.note || "")}"><td><b>${esc(p.client)}</b>${p.note ? `<div style="font-size:12px;color:var(--muted)">${esc(p.note)}</div>` : ""}</td><td>${esc(p.country || "")}</td><td><span class="pill p-accent">${esc(p.stage)}</span></td><td class="n">${p.amount ? esc(p.currency) + " " + fmtAmt(p.amount) : "–"}</td><td>${esc(p.expected || "–")}</td></tr>`).join("")}</tbody></table></div>`);
   if (r.notes) h += sec("공유 사항", `<div class="rd-notes">${esc(r.notes)}</div>`);
@@ -1289,12 +1289,12 @@ function rowHTML(kind, o, i) {
   const del = `<button type="button" class="icon-btn" data-del aria-label="이 행 삭제">×</button>`;
   if (kind === "tasks") return `<div class="row" data-row="tasks">
     ${catCell(id, o.cat)}
-    <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
+    <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="고객사 / 프로젝트 / 기타" aria-label="고객사, 프로젝트 또는 기타">
     <textarea id="${id}-content" data-f="content" class="autogrow" rows="1" placeholder="한 일 (예: 샘플 피드백 협의) · Enter로 줄바꿈" aria-label="업무 내용">${esc(o.content)}</textarea>
     <select id="${id}-status" data-f="status" aria-label="진행 상태">${opts(STATUSES, o.status)}</select>${del}</div>`;
   if (kind === "plans") return `<div class="row" data-row="plans">
     ${catCell(id, o.cat)}
-    <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
+    <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="고객사 / 프로젝트 / 기타" aria-label="고객사, 프로젝트 또는 기타">
     <textarea id="${id}-content" data-f="content" class="autogrow" rows="1" placeholder="할 일 · Enter로 줄바꿈" aria-label="계획 내용">${esc(o.content)}</textarea>${del}</div>`;
   if (kind === "pipeline") return `<div class="row" data-row="pipeline">
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처명" aria-label="거래처명">
@@ -1320,8 +1320,8 @@ function rowHTML(kind, o, i) {
     <input type="hidden" data-f="resolved" value="${o.resolved ? "1" : ""}">${del}</div>`;
 }
 const HEADS = {
-  tasks: ["구분", "거래처 / 프로젝트", "내용", "상태", ""],
-  plans: ["구분", "거래처 / 프로젝트", "할 일", ""],
+  tasks: ["구분", "고객사 / 프로젝트 / 기타", "내용", "상태", ""],
+  plans: ["구분", "고객사 / 프로젝트 / 기타", "할 일", ""],
   pipeline: ["거래처", "국가", "단계", "예상 금액", "통화", "예상 시기", ""],
   issues: ["내용", "긴급도", "요청 대상", ""],
   decisions: ["안건", "결정 기한", "영향 금액", "통화", ""]
@@ -1556,7 +1556,7 @@ function historyHTML() {
 function csvCell(v) { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
 function toCSV(rows) { return "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\r\n"); }
 function exportTasks() {
-  const rows = [["날짜", "작성자", "지역", "구분", "거래처/프로젝트", "내용", "상태"]];
+  const rows = [["날짜", "작성자", "지역", "구분", "고객사/프로젝트/기타", "내용", "상태"]];
   filteredHistory().forEach(r => (r.tasks || []).forEach(t => rows.push([r.date, r.memberName, r.region, normCat(t.cat), t.client, t.content, t.status])));
   offerFile(`일일보고_업무내역_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
 }
