@@ -279,6 +279,10 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 .modal-h .right{margin-left:auto;display:flex;gap:6px}
 .modal textarea{min-height:240px;font-family:var(--font-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+/* 내용 칸: Enter로 줄바꿈하면 아래로 늘어남 */
+textarea.autogrow{min-height:34px;height:34px;resize:none;overflow:hidden;line-height:1.45;padding:6px 9px}
+.row[data-row="tasks"],.row[data-row="plans"]{align-items:start}
+.tasklist li > span:last-child,.plans li,.rd-list li > span{white-space:pre-line}
 /* 구분 직접 입력 */
 .cat-cell{min-width:0}
 .cat-custom{display:flex;gap:4px;align-items:center}
@@ -728,12 +732,12 @@ function reportText(r, teamName) {
   const tasks = (r.tasks || []).filter(t => t.content);
   if (tasks.length) {
     L.push("", "■ 오늘 한 일");
-    tasks.forEach((t, i) => L.push(`${i + 1}. [${normCat(t.cat)}]${t.client ? " " + t.client + " –" : ""} ${t.content} (${t.status})`));
+    tasks.forEach((t, i) => L.push(`${i + 1}. [${normCat(t.cat)}]${t.client ? " " + t.client + " –" : ""} ${String(t.content).replace(/\n/g, "\n   ")} (${t.status})`));
   }
   const plans = (r.plans || []).filter(t => t.content);
   if (plans.length) {
     L.push("", "■ 다음 근무일 계획");
-    plans.forEach((t, i) => L.push(`${i + 1}. ${t.client ? t.client + " – " : ""}${t.content}`));
+    plans.forEach((t, i) => L.push(`${i + 1}. ${t.client ? t.client + " – " : ""}${String(t.content).replace(/\n/g, "\n   ")}`));
   }
   const pipe = (r.pipeline || []).filter(p => p.client);
   if (pipe.length) {
@@ -984,7 +988,7 @@ function reportDetailHTML(r) {
       ${x.recommend ? `<div class="rec"><b style="color:var(--accent);margin-right:6px">제안</b>${esc(x.recommend)}</div>` : ""}
       ${x.result ? `<div><b>${esc(st)}:</b> ${esc(x.result)}</div>` : ""}</div>`; }).join(""));
   if (iss.length) h += sec(`이슈·지원 요청 ${iss.length}`, `<ul class="rd-list">${iss.map(x => `<li><span class="pill l-${esc(x.level)}">${esc(x.level)}</span><span style="flex:1${x.resolved ? ";text-decoration:line-through;color:var(--muted)" : ""}">${esc(x.content)}${x.target ? ` <span style="color:var(--muted)">→ ${esc(x.target)}</span>` : ""}</span>${x.resolved ? '<span class="pill p-ok">해결</span>' : ""}</li>`).join("")}</ul>`);
-  h += sec(`오늘 한 일 ${tasks.length}`, tasks.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>구분</th><th>거래처 / 프로젝트</th><th>내용</th><th>상태</th></tr></thead><tbody>${tasks.map(t => `<tr><td style="white-space:nowrap;color:var(--muted)">${esc(normCat(t.cat))}</td><td><b>${esc(t.client || "")}</b></td><td>${esc(t.content)}</td><td><span class="pill s-${esc(t.status)}">${esc(t.status)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">등록된 업무가 없습니다.</p>`);
+  h += sec(`오늘 한 일 ${tasks.length}`, tasks.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>구분</th><th>거래처 / 프로젝트</th><th>내용</th><th>상태</th></tr></thead><tbody>${tasks.map(t => `<tr><td style="white-space:nowrap;color:var(--muted)">${esc(normCat(t.cat))}</td><td><b>${esc(t.client || "")}</b></td><td style="white-space:pre-line">${esc(t.content)}</td><td><span class="pill s-${esc(t.status)}">${esc(t.status)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">등록된 업무가 없습니다.</p>`);
   if (plans.length) h += sec(`다음 근무일 계획 ${plans.length}`, `<ul class="rd-list">${plans.map(p => `<li><span class="pill p-idle">${esc(normCat(p.cat) || "기타")}</span><span>${p.client ? `<b>${esc(p.client)}</b> – ` : ""}${esc(p.content)}</span></li>`).join("")}</ul>`);
   if (pipe.length) h += sec(`영업 파이프라인 변동 ${pipe.length}`, `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>거래처</th><th>국가</th><th>단계</th><th style="text-align:right">예상 금액</th><th>예상 시기</th></tr></thead><tbody>${pipe.map(p => `<tr title="${esc(p.note || "")}"><td><b>${esc(p.client)}</b>${p.note ? `<div style="font-size:12px;color:var(--muted)">${esc(p.note)}</div>` : ""}</td><td>${esc(p.country || "")}</td><td><span class="pill p-accent">${esc(p.stage)}</span></td><td class="n">${p.amount ? esc(p.currency) + " " + fmtAmt(p.amount) : "–"}</td><td>${esc(p.expected || "–")}</td></tr>`).join("")}</tbody></table></div>`);
   if (r.notes) h += sec("공유 사항", `<div class="rd-notes">${esc(r.notes)}</div>`);
@@ -1286,12 +1290,12 @@ function rowHTML(kind, o, i) {
   if (kind === "tasks") return `<div class="row" data-row="tasks">
     ${catCell(id, o.cat)}
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
-    <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="한 일 (예: 샘플 피드백 협의)" aria-label="업무 내용">
+    <textarea id="${id}-content" data-f="content" class="autogrow" rows="1" placeholder="한 일 (예: 샘플 피드백 협의) · Enter로 줄바꿈" aria-label="업무 내용">${esc(o.content)}</textarea>
     <select id="${id}-status" data-f="status" aria-label="진행 상태">${opts(STATUSES, o.status)}</select>${del}</div>`;
   if (kind === "plans") return `<div class="row" data-row="plans">
     ${catCell(id, o.cat)}
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
-    <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="할 일" aria-label="계획 내용">${del}</div>`;
+    <textarea id="${id}-content" data-f="content" class="autogrow" rows="1" placeholder="할 일 · Enter로 줄바꿈" aria-label="계획 내용">${esc(o.content)}</textarea>${del}</div>`;
   if (kind === "pipeline") return `<div class="row" data-row="pipeline">
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처명" aria-label="거래처명">
     <input type="text" id="${id}-country" data-f="country" value="${esc(o.country)}" placeholder="국가" aria-label="국가">
@@ -1386,9 +1390,12 @@ function mountWrite() {
   fillForm(r);
   if (!W.loadedId) checkExisting(true);
 }
+function autoGrow(el) { if (!el) return; el.style.height = "auto"; el.style.height = (el.scrollHeight + 2) + "px"; }
+const growAll = () => $$("#reportForm textarea.autogrow").forEach(autoGrow);
 function fillForm(r) {
   const f = $("#reportForm"); if (!f) return;
   f.innerHTML = formHTML(r);
+  growAll();
   updatePreview();
 }
 function refreshWriteMembers() {
@@ -1509,6 +1516,7 @@ function pullPrevPlans() {
   if (!existing.length) rows.innerHTML = "";
   let i = $$('[data-row="tasks"]', rows).length;
   prev.plans.forEach(p => rows.insertAdjacentHTML("beforeend", rowHTML("tasks", { cat: normCat(p.cat) || "기타", client: p.client, content: p.content, status: "진행중" }, i++)));
+  growAll();
   setNotice(`${fmtDate(prev.date)} 보고의 계획 ${prev.plans.length}건을 ‘오늘 한 일’에 넣었습니다. 상태를 확인해 주세요.`, null);
   updatePreview();
 }
@@ -1694,7 +1702,7 @@ document.addEventListener("click", async e => {
     const k = t.dataset.add; const box = $("#rows-" + k);
     const head = box.previousElementSibling; if (head && head.classList.contains("row-head")) head.classList.remove("hidden");
     box.insertAdjacentHTML("beforeend", rowHTML(k, blank[k](), box.children.length + Date.now() % 1000));
-    const last = box.lastElementChild.querySelector("input[type=text]"); if (last) last.focus();
+    growAll(); const last = box.lastElementChild.querySelector("input[type=text]"); if (last) last.focus();
     updatePreview(); return;
   }
   if (t.hasAttribute("data-del")) {
@@ -1789,6 +1797,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.matches("tr[data-open], article[data-open]")) openReport(e.target.dataset.open);
 });
 document.addEventListener("input", e => {
+  if (e.target.classList && e.target.classList.contains("autogrow")) autoGrow(e.target);
   if (e.target.closest("#reportForm")) {
     if (e.target.dataset.f === "amount") { const v = e.target.value.replace(/[^0-9.]/g, ""); const [i, d] = v.split("."); const f = (i ? Number(i).toLocaleString("en-US") : "") + (d != null ? "." + d : ""); if (f !== e.target.value) e.target.value = f; }
     clearTimeout(updatePreview._t); updatePreview._t = setTimeout(updatePreview, 150);
