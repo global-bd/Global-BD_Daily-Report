@@ -4,11 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Global-BD_Daily Report</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/SpoqaHanSansNeo-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/SpoqaHanSansNeo-Bold.woff2" as="font" type="font/woff2" crossorigin>
 <script src="config.js"></script>
 <style>
+/* 서체: Spoqa Han Sans Neo (한글·영문 서브셋 WOFF2, 숫자 고정폭) */
+@font-face{font-family:"Spoqa Han Sans Neo";src:url("fonts/SpoqaHanSansNeo-Thin.woff2") format("woff2");font-weight:100;font-style:normal;font-display:swap}
+@font-face{font-family:"Spoqa Han Sans Neo";src:url("fonts/SpoqaHanSansNeo-Light.woff2") format("woff2");font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:"Spoqa Han Sans Neo";src:url("fonts/SpoqaHanSansNeo-Regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Spoqa Han Sans Neo";src:url("fonts/SpoqaHanSansNeo-Medium.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Spoqa Han Sans Neo";src:url("fonts/SpoqaHanSansNeo-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
 /* Layout idea: 운영 콘솔. 상단에 팀 현지 시각 스트립, 그 아래 탭 4개(현황·작성·이력·팀원), 요약 → 세부 순으로 스캔 */
 :root{
   --paper:#f2f4f3;
@@ -16,23 +21,25 @@
   --ink:#16222b;
   --muted:#5b6a73;
   --line:#dbe2e4;
-  --accent:#0a6577;
+  --accent:#0f7d4e;
   --accent-ink:#ffffff;
-  --accent-soft:#e0eef0;
+  --accent-soft:#e1f1e8;
+  --brand-red:#dd3633; --brand-green:#129861; --brand-ink:#333334;
+  --logo-l:block; --logo-d:none;
   --ok:#1d7f47; --ok-soft:#e1f3e8;
   --warn:#a5680f; --warn-soft:#fbf0dc;
   --bad:#b8392a; --bad-soft:#fbe4e0;
   --info:#2c64a8; --info-soft:#e3ecf8;
   --idle:#8a979e; --idle-soft:#eceff0;
-  --font-body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-body:"Spoqa Han Sans Neo", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono:"Spoqa Han Sans Neo", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
   --r:8px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
-    --accent:#4db0be; --accent-ink:#06191d; --accent-soft:#143238;
+    --accent:#3fbf86; --accent-ink:#04170e; --accent-soft:#12301f; --logo-l:none; --logo-d:block;
     --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
     --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
     --idle:#73828a; --idle-soft:#1d262b;
@@ -41,7 +48,7 @@
 }
 :root[data-theme="dark"]{
   --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
-  --accent:#4db0be; --accent-ink:#06191d; --accent-soft:#143238;
+  --accent:#3fbf86; --accent-ink:#04170e; --accent-soft:#12301f; --logo-l:none; --logo-d:block;
   --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
   --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
   --idle:#73828a; --idle-soft:#1d262b;
@@ -61,10 +68,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
 /* ---------- header ---------- */
-.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top{background:var(--surface);border-bottom:1px solid var(--line);position:relative}
+.top::before{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--brand-red) 0 33.3%,var(--brand-green) 33.3% 66.6%,var(--brand-ink) 66.6% 100%)}
+.logo{height:34px;width:auto}
+.logo-light{display:var(--logo-l)} .logo-dark{display:var(--logo-d)}
+.brand-sep{width:1px;height:26px;background:var(--line);align-self:center}
 .top-inner{max-width:1280px;margin:0 auto;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px}
 .brand-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand-text{display:flex;flex-direction:column;gap:1px}
 .brand h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
 .brand .sub{color:var(--muted);font-size:13px}
 .mode{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
@@ -75,6 +87,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .clock{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:4px 10px;white-space:nowrap;font-size:12px}
 .clock b{font-family:var(--font-mono);font-size:13px;font-weight:600}
 .clock .city{color:var(--muted)}
+.clock .abbr{font-size:10.5px;color:var(--muted);letter-spacing:.02em}
 .clock .off{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
 .clock .dot{width:6px;height:6px;border-radius:50%;background:var(--idle)}
 .clock .dot.on{background:var(--ok)}
@@ -135,7 +148,7 @@ label.fl{align-items:stretch}
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .toolbar .date-input{width:auto}
 .toolbar h2{font-size:17px;margin-right:6px}
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;border-top:3px solid var(--line)}
 .kpi .k{font-size:12px;color:var(--muted)}
 .kpi .v{font-family:var(--font-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -176,8 +189,28 @@ table.matrix td{padding:0}
 .tasklist .cl{font-weight:600}
 .sublabel{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}
 .plans{margin:0;padding-left:18px;font-size:13px;color:var(--ink)}
-.issue{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
-.issue:first-child{border-top:0;padding-top:0}
+.issue{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.issue-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));column-gap:28px}
+/* ELT 의사결정 */
+.elt-card{border-top:3px solid var(--ink)}
+.elt-card .card-h h2{font-size:16px}
+.elt-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px}
+.elt-item{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;background:var(--surface)}
+.elt-item.lv3{border-left-color:var(--bad)} .elt-item.lv2{border-left-color:var(--warn)} .elt-item.lv0{border-left-color:var(--idle)}
+.elt-top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.elt-top h3{font-size:15px;flex:1;min-width:180px}
+.elt-amt{font-size:13px;font-weight:600;white-space:nowrap}
+.elt-detail{font-size:13px;white-space:pre-wrap}
+.elt-rec{font-size:13px;background:var(--accent-soft);border-radius:4px;padding:6px 9px}
+.elt-rec b{color:var(--accent);margin-right:6px}
+.elt-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.elt-foot .btn{margin-left:auto}
+.elt-decide{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:8px}
+.elt-decide textarea{min-height:56px}
+.elt-decide .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.elt-closed{margin-top:12px;font-size:13px}
+.elt-closed summary{cursor:pointer;color:var(--muted);font-weight:500;padding:4px 0}
+.elt-closed .issue .res{color:var(--ink)}
 .issue .body{flex:1;min-width:0}
 .issue .by{color:var(--muted);font-size:12px}
 .empty{color:var(--muted);font-size:13px;padding:6px 0}
@@ -210,6 +243,8 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 .row[data-row="plans"]{grid-template-columns:150px 180px minmax(0,1fr) 30px}
 .row[data-row="pipeline"]{grid-template-columns:minmax(0,1.3fr) 110px 120px 120px 84px 130px 30px}
 .row[data-row="issues"]{grid-template-columns:minmax(0,1fr) 90px 150px 30px}
+.row[data-row="decisions"]{grid-template-columns:minmax(0,1fr) 150px 130px 84px 30px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.sec-elt{border-top:3px solid var(--ink)}
 .row-head{display:grid;gap:6px;font-size:11.5px;color:var(--muted);font-weight:600;padding:0 2px}
 .row.resolved{opacity:.55}
 .notice{border-radius:6px;padding:8px 12px;font-size:13px;background:var(--info-soft);color:var(--info)}
@@ -226,7 +261,7 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 .team-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 130px minmax(0,1fr) 30px;gap:8px;align-items:center}
 .help{color:var(--muted);font-size:13px;max-width:70ch}
 .help ol{padding-left:18px;margin:6px 0}
-.help code{font-family:var(--font-mono);font-size:12px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.help code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 
 /* ---------- modal & toast ---------- */
 .overlay{position:fixed;inset:0;background:rgba(10,18,22,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
@@ -248,7 +283,8 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
   .fields{grid-template-columns:1fr 1fr}
   .row[data-row]{grid-template-columns:1fr 1fr 30px!important}
   .row[data-row] > :not(.icon-btn){grid-column:span 1}
-  .row[data-row] [data-f="content"],.row[data-row] [data-f="client"]{grid-column:1 / span 2}
+  .row[data-row] [data-f="content"],.row[data-row] [data-f="client"],.row[data-row] [data-f="title"]{grid-column:1 / span 2}
+  .issue-grid,.elt-list{grid-template-columns:1fr}
   .row[data-row] .icon-btn{grid-column:3;grid-row:1}
   .row-head{display:none}
   .row[data-row]{border-bottom:1px solid var(--line);padding-bottom:8px}
@@ -269,10 +305,15 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 <header class="top">
   <div class="top-inner">
     <div class="brand-row">
-      <div class="brand"><h1 id="teamTitle">해외사업팀 일일보고</h1><span class="sub" id="todayLabel"></span></div>
+      <div class="brand">
+        <img class="logo logo-light" src="assets/ace-logo.png" onerror="this.style.display='none'" alt="ACE Engineering" width="110" height="34">
+        <img class="logo logo-dark" src="assets/ace-logo-dark.png" onerror="this.style.display='none'" alt="ACE Engineering" width="110" height="34">
+        <span class="brand-sep" aria-hidden="true"></span>
+        <div class="brand-text"><h1 id="teamTitle">해외사업팀 일일보고</h1><span class="sub" id="todayLabel"></span></div>
+      </div>
       <span class="mode" id="modeBadge" data-mode="connecting"><i></i><span>연결 중</span></span>
     </div>
-    <div class="clocks" id="clocks" aria-label="팀원 현지 시각"></div>
+    <div class="clocks" id="clocks" aria-label="서울·미국 서부·미국 동부 현지 시각"></div>
     <nav class="tabs" aria-label="화면 선택">
       <a href="#status" data-view="status">팀 현황</a>
       <a href="#write" data-view="write" class="cta">보고 작성</a>
@@ -301,6 +342,7 @@ const STAGES = ["리드", "첫 접촉", "제안·견적", "협상", "계약", "�
 const ACTIVE_STAGES = ["리드", "첫 접촉", "제안·견적", "협상"];
 const CURRENCIES = ["USD", "EUR", "JPY", "CNY", "KRW", "AED", "SAR", "VND", "THB", "기타"];
 const LEVELS = ["높음", "보통", "낮음"];
+const DEC_STATUS = ["대기", "결정", "보류"];
 const REGIONS = [
   { k: "본사", tz: "Asia/Seoul", city: "서울" },
   { k: "중국", tz: "Asia/Shanghai", city: "상하이" },
@@ -501,7 +543,8 @@ function buildDemo() {
       { client: "Al Noor Trading", country: "UAE", stage: "협상", amount: 120000, currency: "USD", expected: addDays(t, 60).slice(0, 7), note: "포장 사양 변경 시 단가 2% 인상 예상" },
       { client: "Gulf Retail Group", country: "사우디", stage: "제안·견적", amount: 85000, currency: "USD", expected: addDays(t, 90).slice(0, 7), note: "" }
     ],
-    issues: [{ content: "Gulf Retail 요청 단가가 내부 마진 기준(15%) 미달. 가격 승인 필요", level: "높음", target: "팀장", resolved: false }],
+    decisions: [{ title: "Gulf Retail Group 단가 인하 요청 수용 여부 (마진 15% → 12.5%)", deadline: addDays(t, 2), amount: 85000, currency: "USD", detail: "경쟁사 대비 단가 7% 높다는 피드백. 미수용 시 2027년 1분기 발주가 경쟁사로 넘어갈 가능성이 큼.", recommend: "연간 물량 3만 개 보장 조건으로 12.5% 승인", status: "대기", result: "", decidedAt: "" }],
+    issues: [{ content: "Big 5 전시 부스 전력 증설 추가 비용(USD 1,800) 승인 필요", level: "높음", target: "팀장", resolved: false }],
     notes: "두바이 현지 내륙 운송비가 전월 대비 약 8% 올랐습니다."
   }));
   R.push(mk(t, M[1], {
@@ -513,6 +556,7 @@ function buildDemo() {
     ],
     plans: [{ cat: "수출입·물류", client: "함부르크향 컨테이너", content: "원산지증명 재발급본 포워더 전달" }],
     pipeline: [{ client: "Hansa Industrie GmbH", country: "독일", stage: "제안·견적", amount: 64000, currency: "EUR", expected: addDays(t, 120).slice(0, 7), note: "" }],
+    decisions: [{ title: "폴란드 유통 파트너 독점 판매권 부여 (3년)", deadline: addDays(t, 7), amount: "", currency: "EUR", detail: "현지 1위 B2B 유통사가 독점권을 조건으로 초기 물량 확약 제안. 비독점 시 진입 지연 예상.", recommend: "1년 독점 + 연간 목표 미달 시 해지 조항으로 역제안", status: "대기", result: "", decidedAt: "" }],
     issues: [{ content: "원산지증명 재발급 필요, 선적 2일 지연 예상", level: "보통", target: "물류팀", resolved: false }]
   }));
   R.push(mk(t, M[2], {
@@ -522,7 +566,8 @@ function buildDemo() {
       { cat: "계약·협상", client: "Northline Supply", content: "계약서 수정본 법무 검토 요청", status: "대기" }
     ],
     plans: [{ cat: "계약·협상", client: "Northline Supply", content: "법무 검토 의견 반영 후 서명본 송부" }],
-    pipeline: [{ client: "Northline Supply", country: "미국", stage: "계약", amount: 240000, currency: "USD", expected: addDays(t, 30).slice(0, 7), note: "2027년 연간 물량" }]
+    pipeline: [{ client: "Northline Supply", country: "미국", stage: "계약", amount: 240000, currency: "USD", expected: addDays(t, 30).slice(0, 7), note: "2027년 연간 물량" }],
+    decisions: [{ title: "Northline Supply 결제 조건 Net 90 수용 여부", deadline: addDays(t, -1), amount: 240000, currency: "USD", detail: "바이어가 계약 갱신 조건으로 Net 60 → Net 90 요청. 무역보험 한도 내 수용 가능.", recommend: "무역보험 부보 전제로 수용", status: "대기", result: "", decidedAt: "" }]
   }));
   R.push(mk(t, M[3], {
     submittedAt: `${t}T18:20:00`,
@@ -532,7 +577,8 @@ function buildDemo() {
     ],
     plans: [{ cat: "제안·견적", client: "Bangkok Home Mart", content: "견적서 v2 송부" }],
     pipeline: [{ client: "Bangkok Home Mart", country: "태국", stage: "리드", amount: 30000, currency: "USD", expected: addDays(t, 150).slice(0, 7), note: "" }],
-    issues: [{ content: "태국 현지 인증 대행사 견적 비교 필요", level: "낮음", target: "", resolved: false }]
+    issues: [{ content: "태국 현지 인증 대행사 견적 비교 필요", level: "낮음", target: "", resolved: false }],
+    decisions: [{ title: "베트남 대리점 4분기 프로모션 예산 증액", deadline: addDays(t, -2), amount: 15000, currency: "USD", detail: "", recommend: "", status: "결정", result: "USD 10,000 범위 내 승인 (이호용 상무)", decidedAt: addDays(t, -1) + "T10:30:00" }]
   }));
   let d = t;
   for (let i = 0; i < 9; i++) {
@@ -563,6 +609,21 @@ function reportText(r, teamName) {
   const wt = r.workType + (r.location ? `(${r.location})` : "");
   L.push(`[${teamName || CFG.TEAM_NAME} 일일보고] ${fmtDate(r.date)} · ${r.memberName || "작성자"}${r.region ? " · " + r.region : ""} · ${wt}`);
   if (OFF_TYPES.includes(r.workType)) L.push("※ 휴가");
+  const decs = (r.decisions || []).filter(x => x.title);
+  if (decs.length) {
+    L.push("", "■ ELT 의사결정 필요 사항");
+    decs.forEach((x, i) => {
+      L.push(`${i + 1}. ${x.title}${x.deadline ? " (결정 기한 " + fmtDate(x.deadline) + ")" : ""}${x.amount ? " · " + x.currency + " " + fmtAmt(x.amount) : ""}`);
+      if (x.detail) L.push(`   - 배경: ${x.detail}`);
+      if (x.recommend) L.push(`   - 제안: ${x.recommend}`);
+      if (x.status && x.status !== "대기") L.push(`   → ${x.status}${x.result ? ": " + x.result : ""}`);
+    });
+  }
+  const issTop = (r.issues || []).filter(x => x.content);
+  if (issTop.length) {
+    L.push("", "■ 이슈·지원 요청");
+    issTop.forEach(x => L.push(`- [${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`));
+  }
   const tasks = (r.tasks || []).filter(t => t.content);
   if (tasks.length) {
     L.push("", "■ 오늘 한 일");
@@ -578,11 +639,6 @@ function reportText(r, teamName) {
     L.push("", "■ 영업 파이프라인 변동");
     pipe.forEach(p => L.push(`- ${p.client}${p.country ? " (" + p.country + ")" : ""} ${p.stage}${p.amount ? " · " + p.currency + " " + fmtAmt(p.amount) : ""}${p.expected ? " · 예상 " + p.expected : ""}${p.note ? " · " + p.note : ""}`));
   }
-  const iss = (r.issues || []).filter(x => x.content);
-  if (iss.length) {
-    L.push("", "■ 이슈·지원 요청");
-    iss.forEach(x => L.push(`- [${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`));
-  }
   if (r.notes) L.push("", "■ 공유 사항", r.notes);
   L.push("", `업무량: ${r.load || "적정"}`);
   return L.join("\n");
@@ -596,20 +652,23 @@ function tzParts(tz, now) {
   const o = {}; f.formatToParts(now).forEach(p => o[p.type] = p.value);
   return { date: `${o.year}-${o.month}-${o.day}`, hour: Number(o.hour) % 24, minute: o.minute, wd: o.weekday };
 }
+const CLOCKS = [
+  { label: "서울", tz: "Asia/Seoul", abbr: "KST" },
+  { label: "미국 서부", tz: "America/Los_Angeles" },
+  { label: "미국 동부", tz: "America/New_York" }
+];
+function tzAbbr(tz, now) {
+  try { return (new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" }).formatToParts(now).find(p => p.type === "timeZoneName") || {}).value || ""; }
+  catch (e) { return ""; }
+}
 function renderClocks() {
-  const team = isDemo() ? (DEMO || (DEMO = buildDemo())).team : Store.team;
-  let keys = [...new Set(team.members.map(m => m.region).filter(Boolean))];
-  if (!keys.includes("본사")) keys.unshift("본사");
-  if (keys.length < 2) keys = ["본사", "중동", "유럽", "북미"];
-  keys.sort((a, b) => REGIONS.findIndex(r => r.k === a) - REGIONS.findIndex(r => r.k === b));
   const now = new Date();
   const seoul = tzParts("Asia/Seoul", now);
-  $("#clocks").innerHTML = keys.map(k => {
-    const r = regionOf(k); if (!r) return "";
-    const p = tzParts(r.tz, now);
+  $("#clocks").innerHTML = CLOCKS.map(c => {
+    const p = tzParts(c.tz, now);
     const diff = Math.round((parseYmd(p.date) - parseYmd(seoul.date)) / 864e5);
     const on = !["Sat", "Sun"].includes(p.wd) && p.hour >= 9 && p.hour < 18;
-    return `<span class="clock" title="${esc(r.k)} 현지 시각${on ? " · 업무 시간" : ""}"><span class="dot${on ? " on" : ""}"></span><span class="city">${esc(r.city)}</span><b>${pad(p.hour)}:${p.minute}</b>${diff ? `<span class="off">${diff > 0 ? "+" : ""}${diff}일</span>` : ""}</span>`;
+    return `<span class="clock" title="${esc(c.label)} 현지 시각${on ? " · 업무 시간" : ""}"><span class="dot${on ? " on" : ""}"></span><span class="city">${esc(c.label)}</span><b>${pad(p.hour)}:${p.minute}</b><span class="abbr">${esc(c.abbr || tzAbbr(c.tz, now))}</span>${diff ? `<span class="off">${diff > 0 ? "+" : ""}${diff}일</span>` : ""}</span>`;
   }).join("");
   $("#todayLabel").textContent = [leaderLabel(isDemo() ? null : Store.team), fmtDateLong(today())].filter(Boolean).join(" · ");
 }
@@ -674,6 +733,8 @@ function statusHTML() {
   all.filter(r => r.date <= date && r.date >= since).forEach(r => (r.issues || []).forEach((x, i) => { if (x.content && !x.resolved) openIssues.push({ r, x, i }); }));
   openIssues.sort((a, b) => LEVELS.indexOf(a.x.level) - LEVELS.indexOf(b.x.level) || (a.r.date < b.r.date ? 1 : -1));
   const urgent = openIssues.filter(o => o.x.level === "높음").length;
+  const elt = eltList(all, date);
+  const eltOver = elt.open.filter(o => dday(o.x.deadline).lvl === 3).length;
   const away = day.filter(r => TRIP_TYPES.includes(r.workType));
   const off = day.filter(r => OFF_TYPES.includes(r.workType)).length;
   const rate = expected ? Math.round(submitted / expected * 100) : 0;
@@ -690,7 +751,10 @@ function statusHTML() {
       <button class="btn sm" data-act="copyDay"${day.length ? "" : " disabled"}>이날 보고 전체 복사</button>
       <a class="btn primary sm" href="#write">보고 작성</a>
     </span></div>`;
+  h += eltCard(elt, demo);
+  h += issuesCard(openIssues, demo);
   h += `<div class="kpis">
+    <div class="kpi ${elt.open.length ? (eltOver ? "bad" : "warn") : ""}"><span class="k">ELT 결정 대기</span><span class="v">${elt.open.length}</span><span class="d">${eltOver ? `기한 초과·오늘 마감 ${eltOver}건` : elt.open.length ? "기한 내" : "없음"}</span></div>
     <div class="kpi ${rate === 100 ? "ok" : rate >= 60 ? "info" : "warn"}"><span class="k">제출</span><span class="v">${submitted}<small> / ${expected}명</small></span><span class="d">제출률 ${rate}%${off ? ` · 휴가 ${off}명` : ""}</span></div>
     <div class="kpi info"><span class="k">진행 중 업무</span><span class="v">${prog}</span><span class="d">완료 ${done}건</span></div>
     <div class="kpi ${delay ? "bad" : ""}"><span class="k">지연 업무</span><span class="v">${delay}</span><span class="d">${delay ? "확인 필요" : "없음"}</span></div>
@@ -720,7 +784,7 @@ function statusHTML() {
   // 팀원별 카드 + 이슈/파이프라인
   const cards = members.map(m => memberCard(m, byMember.get(m.id), demo)).concat(extra.map(r => memberCard({ id: r.memberId, name: r.memberName, region: r.region }, r, demo))).join("");
   h += `<div class="grid2"><section class="card" style="padding:16px"><div class="card-h"><h2>팀원별 업무</h2><span class="meta">${fmtDate(date)} 제출분</span></div><div class="members">${cards || '<p class="empty">아직 팀원이 없습니다.</p>'}</div></section>
-    <div style="display:flex;flex-direction:column;gap:16px">${issuesCard(openIssues, demo)}${pipelineCard(all, date)}</div></div>`;
+    <div style="display:flex;flex-direction:column;gap:16px">${pipelineCard(all, date)}</div></div>`;
   return h;
 }
 function memberCard(m, r, demo) {
@@ -731,17 +795,57 @@ function memberCard(m, r, demo) {
   const tasks = (r.tasks || []).filter(t => t.content);
   const plans = (r.plans || []).filter(t => t.content);
   const iss = (r.issues || []).filter(x => x.content && !x.resolved);
+  const decN = (r.decisions || []).filter(x => x.title && (!x.status || x.status === "대기")).length;
   return `<article class="mcard">
     <div class="who"><b>${esc(r.memberName || dispName(m))}</b>${reg}<span class="pill ${wtPill}">${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</span>${loadPill}<span class="t">${fmtTime(r.submittedAt)}</span></div>
     ${tasks.length ? `<ul class="tasklist">${tasks.map(t => `<li><span class="pill s-${esc(t.status)}">${esc(t.status)}</span><span><span class="cat">${esc(t.cat)}</span> ${t.client ? `<span class="cl">${esc(t.client)}</span> ` : ""}${esc(t.content)}</span></li>`).join("")}</ul>` : `<p class="empty">${OFF_TYPES.includes(r.workType) ? "휴가" : "등록된 업무 없음"}</p>`}
     ${plans.length ? `<div><div class="sublabel">다음 근무일</div><ul class="plans">${plans.map(p => `<li>${p.client ? esc(p.client) + " – " : ""}${esc(p.content)}</li>`).join("")}</ul></div>` : ""}
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${iss.length ? iss.map(x => `<span class="pill l-${esc(x.level)}">이슈 ${esc(x.level)}</span>`).join("") : ""}<button class="btn sm ghost" style="margin-left:auto" data-open="${esc(r.id)}">전문 보기</button></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${decN ? `<span class="pill p-bad">ELT 결정 요청 ${decN}</span>` : ""}${iss.length ? iss.map(x => `<span class="pill l-${esc(x.level)}">이슈 ${esc(x.level)}</span>`).join("") : ""}<button class="btn sm ghost" style="margin-left:auto" data-open="${esc(r.id)}">전문 보기</button></div>
   </article>`;
 }
+function eltList(all, date) {
+  const open = [], closed = [];
+  const since = addDays(date, -14);
+  all.filter(r => r.date <= date).forEach(r => (r.decisions || []).forEach((x, i) => {
+    if (!x.title) return;
+    const o = { r, x, i };
+    if (!x.status || x.status === "대기") open.push(o);
+    else if ((x.decidedAt || "").slice(0, 10) >= since) closed.push(o);
+  }));
+  const key = o => o.x.deadline || "9999-99-99";
+  open.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : (a.r.date < b.r.date ? -1 : 1));
+  closed.sort((a, b) => (a.x.decidedAt || "") < (b.x.decidedAt || "") ? 1 : -1);
+  return { open, closed };
+}
+function dday(deadline) {
+  if (!deadline) return { cls: "p-idle", txt: "기한 미정", lvl: 0 };
+  const n = Math.round((parseYmd(deadline) - parseYmd(today())) / 864e5);
+  if (n < 0) return { cls: "p-bad", txt: `기한 ${-n}일 초과`, lvl: 3 };
+  if (n === 0) return { cls: "p-bad", txt: "오늘 마감", lvl: 3 };
+  if (n <= 3) return { cls: "p-warn", txt: `D-${n}`, lvl: 2 };
+  return { cls: "p-accent", txt: `D-${n}`, lvl: 1 };
+}
+function eltCard(elt, demo) {
+  const dis = demo || !Store.canWrite ? " disabled" : "";
+  const items = elt.open.map(o => { const d = dday(o.x.deadline); const key = `${o.r.id}-${o.i}`;
+    return `<article class="elt-item lv${d.lvl}">
+      <div class="elt-top"><span class="pill ${d.cls}">${d.txt}</span><h3>${esc(o.x.title)}</h3>${o.x.amount ? `<span class="elt-amt num">${esc(o.x.currency || "")} ${fmtAmt(o.x.amount)}</span>` : ""}</div>
+      ${o.x.detail ? `<p class="elt-detail">${esc(o.x.detail)}</p>` : ""}
+      ${o.x.recommend ? `<p class="elt-rec"><b>제안</b>${esc(o.x.recommend)}</p>` : ""}
+      <div class="elt-foot"><span>${esc(o.r.memberName)} · ${fmtDate(o.r.date)} 보고${o.x.deadline ? " · 기한 " + fmtDate(o.x.deadline) : ""}</span>
+        <button class="btn sm" data-act="decide" data-key="${esc(key)}"${dis}>결정 기록</button></div>
+      <div class="elt-decide hidden" id="dec-${esc(key)}">
+        <label class="fl"><span>결정 내용</span><textarea id="decres-${esc(key)}" placeholder="예: 연간 물량 보장 조건으로 12.5% 승인 (이호용 상무)"></textarea></label>
+        <div class="acts"><button class="btn sm" data-act="decideCancel">취소</button><button class="btn sm" data-act="decideSave" data-st="보류" data-id="${esc(o.r.id)}" data-i="${o.i}">보류</button><button class="btn sm primary" data-act="decideSave" data-st="결정" data-id="${esc(o.r.id)}" data-i="${o.i}">결정 완료</button></div>
+      </div></article>`; }).join("");
+  const closed = elt.closed.length ? `<details class="elt-closed"><summary>최근 14일 결정·보류 ${elt.closed.length}건</summary>${elt.closed.map(o => `<div class="issue"><span class="pill ${o.x.status === "결정" ? "p-ok" : "p-idle"}">${esc(o.x.status)}</span><div class="body"><b>${esc(o.x.title)}</b>${o.x.result ? `<div class="res">${esc(o.x.result)}</div>` : ""}<div class="by">${esc(o.r.memberName)} 상신 · ${fmtDate((o.x.decidedAt || "").slice(0, 10) || o.r.date)} 처리</div></div><button class="btn sm ghost" data-act="reopen" data-id="${esc(o.r.id)}" data-i="${o.i}"${dis}>다시 열기</button></div>`).join("")}</details>` : "";
+  return `<section class="card elt-card"><div class="card-h"><h2>ELT 의사결정 필요 사항</h2><span class="meta">결정 대기 ${elt.open.length}건 · 기한이 가까운 순</span><span class="right"><a class="btn sm" href="#write">안건 올리기</a></span></div>
+    ${items ? `<div class="elt-list">${items}</div>` : `<p class="empty">결정을 기다리는 안건이 없습니다. 보고 작성의 ‘ELT 의사결정 필요 사항’에 올리면 여기에 가장 먼저 표시됩니다.</p>`}${closed}</section>`;
+}
 function issuesCard(list, demo) {
-  return `<section class="card"><div class="card-h"><h2>이슈·지원 요청</h2><span class="meta">최근 30일 미해결</span></div>
-    ${list.length ? list.slice(0, 12).map(o => `<div class="issue"><span class="pill l-${esc(o.x.level)}">${esc(o.x.level)}</span><div class="body">${esc(o.x.content)}<div class="by">${esc(o.r.memberName)} · ${fmtDate(o.r.date)}${o.x.target ? " · 요청: " + esc(o.x.target) : ""}</div></div>
-      <button class="btn sm" data-act="resolve" data-id="${esc(o.r.id)}" data-i="${o.i}"${demo || !Store.canWrite ? " disabled" : ""}>해결</button></div>`).join("") : `<p class="empty">미해결 이슈가 없습니다.</p>`}
+  return `<section class="card"><div class="card-h"><h2>이슈·지원 요청</h2><span class="meta">최근 30일 미해결 ${list.length}건 · 긴급도 순</span></div>
+    ${list.length ? '<div class="issue-grid">' + list.slice(0, 12).map(o => `<div class="issue"><span class="pill l-${esc(o.x.level)}">${esc(o.x.level)}</span><div class="body">${esc(o.x.content)}<div class="by">${esc(o.r.memberName)} · ${fmtDate(o.r.date)}${o.x.target ? " · 요청: " + esc(o.x.target) : ""}</div></div>
+      <button class="btn sm" data-act="resolve" data-id="${esc(o.r.id)}" data-i="${o.i}"${demo || !Store.canWrite ? " disabled" : ""}>해결</button></div>`).join("") + "</div>" : `<p class="empty">미해결 이슈가 없습니다.</p>`}
     ${list.length > 12 ? `<p class="empty">외 ${list.length - 12}건은 보고 이력에서 확인하세요.</p>` : ""}</section>`;
 }
 function latestPipeline(all, upto) {
@@ -772,13 +876,14 @@ const blank = {
   tasks: () => ({ cat: TASK_CATS[0], client: "", content: "", status: "완료" }),
   plans: () => ({ cat: TASK_CATS[0], client: "", content: "" }),
   pipeline: () => ({ client: "", country: "", stage: "리드", amount: "", currency: "USD", expected: "", note: "" }),
-  issues: () => ({ content: "", level: "보통", target: "", resolved: false })
+  issues: () => ({ content: "", level: "보통", target: "", resolved: false }),
+  decisions: () => ({ title: "", deadline: "", amount: "", currency: "USD", detail: "", recommend: "", status: "대기", result: "", decidedAt: "" })
 };
 const W = { loadedId: null, notice: null };
 function emptyReport() {
   const me = lsGet("bd-me", "");
   const m = memberById(Store.team, me);
-  return { date: today(), memberId: m ? m.id : "", memberName: m ? dispName(m) : "", region: m ? m.region : "", workType: "사무실", location: "", load: "적정", tasks: [blank.tasks()], plans: [blank.plans()], pipeline: [], issues: [], notes: "" };
+  return { date: today(), memberId: m ? m.id : "", memberName: m ? dispName(m) : "", region: m ? m.region : "", workType: "사무실", location: "", load: "적정", tasks: [blank.tasks()], plans: [blank.plans()], pipeline: [], issues: [], decisions: [], notes: "" };
 }
 function writeShellHTML() {
   return `<div class="write"><form class="form" id="reportForm" novalidate></form>
@@ -808,6 +913,15 @@ function rowHTML(kind, o, i) {
     <select id="${id}-currency" data-f="currency" aria-label="통화">${opts(CURRENCIES, o.currency)}</select>
     <input type="month" id="${id}-expected" data-f="expected" value="${esc(o.expected)}" aria-label="예상 계약 시기">${del}
     <input type="text" id="${id}-note" data-f="note" value="${esc(o.note)}" placeholder="메모 (선택)" aria-label="메모" style="grid-column:1 / -2"></div>`;
+  if (kind === "decisions") return `<div class="row${o.status && o.status !== "대기" ? " resolved" : ""}" data-row="decisions">
+    <input type="text" id="${id}-title" data-f="title" value="${esc(o.title)}" placeholder="결정이 필요한 안건 (예: Gulf Retail 단가 인하 수용 여부)" aria-label="안건">
+    <input type="date" id="${id}-deadline" data-f="deadline" value="${esc(o.deadline)}" aria-label="결정 기한">
+    <input type="text" inputmode="decimal" id="${id}-amount" data-f="amount" value="${esc(o.amount === "" || o.amount == null ? "" : fmtAmt(o.amount))}" placeholder="영향 금액" aria-label="영향 금액" class="num">
+    <select id="${id}-currency" data-f="currency" aria-label="통화">${opts(CURRENCIES, o.currency || "USD")}</select>${del}
+    <textarea id="${id}-detail" data-f="detail" rows="2" placeholder="배경·현황: 왜 결정이 필요한지, 선택지와 영향" aria-label="배경과 현황" style="grid-column:1 / -2;min-height:56px">${esc(o.detail)}</textarea>
+    <input type="text" id="${id}-recommend" data-f="recommend" value="${esc(o.recommend)}" placeholder="제안 의견 (권고안)" aria-label="제안 의견" style="grid-column:1 / -2">
+    <input type="hidden" data-f="status" value="${esc(o.status || "대기")}"><input type="hidden" data-f="result" value="${esc(o.result || "")}"><input type="hidden" data-f="decidedAt" value="${esc(o.decidedAt || "")}">
+    ${o.status && o.status !== "대기" ? `<span class="pill ${o.status === "결정" ? "p-ok" : "p-idle"}" style="grid-column:1 / -2;justify-self:start">${esc(o.status)}${o.result ? ": " + esc(o.result) : ""}</span>` : ""}</div>`;
   if (kind === "issues") return `<div class="row${o.resolved ? " resolved" : ""}" data-row="issues">
     <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="이슈 또는 필요한 지원" aria-label="이슈 내용">
     <select id="${id}-level" data-f="level" aria-label="긴급도">${opts(LEVELS, o.level)}</select>
@@ -818,14 +932,15 @@ const HEADS = {
   tasks: ["구분", "거래처 / 프로젝트", "내용", "상태", ""],
   plans: ["구분", "거래처 / 프로젝트", "할 일", ""],
   pipeline: ["거래처", "국가", "단계", "예상 금액", "통화", "예상 시기", ""],
-  issues: ["내용", "긴급도", "요청 대상", ""]
+  issues: ["내용", "긴급도", "요청 대상", ""],
+  decisions: ["안건", "결정 기한", "영향 금액", "통화", ""]
 };
 function rowsBlock(kind, items) {
   return `<div class="row-head" style="grid-template-columns:${getComputedStyleCols(kind)}">${HEADS[kind].map(x => `<span>${x}</span>`).join("")}</div>
     <div class="rows" id="rows-${kind}">${items.map((o, i) => rowHTML(kind, o, i)).join("")}</div>`;
 }
 function getComputedStyleCols(kind) {
-  return { tasks: "150px 180px minmax(0,1fr) 100px 30px", plans: "150px 180px minmax(0,1fr) 30px", pipeline: "minmax(0,1.3fr) 110px 120px 120px 84px 130px 30px", issues: "minmax(0,1fr) 90px 150px 30px" }[kind];
+  return { tasks: "150px 180px minmax(0,1fr) 100px 30px", plans: "150px 180px minmax(0,1fr) 30px", pipeline: "minmax(0,1.3fr) 110px 120px 120px 84px 130px 30px", issues: "minmax(0,1fr) 90px 150px 30px", decisions: "minmax(0,1fr) 150px 130px 84px 30px" }[kind];
 }
 function memberOptions(sel) {
   const ms = Store.team.members;
@@ -856,10 +971,13 @@ function formHTML(r) {
   <section class="sec"><div class="sec-h"><span class="no">04</span><h2>영업 파이프라인 변동</h2><span class="hint">새 거래처나 단계·금액이 바뀐 건만 (선택)</span></div>
     ${r.pipeline.length ? rowsBlock("pipeline", r.pipeline) : `<div class="row-head hidden" style="grid-template-columns:${getComputedStyleCols("pipeline")}">${HEADS.pipeline.map(x => `<span>${x}</span>`).join("")}</div><div class="rows" id="rows-pipeline"></div>`}
     <div><button type="button" class="btn sm" data-add="pipeline">+ 거래처 추가</button></div></section>
-  <section class="sec"><div class="sec-h"><span class="no">05</span><h2>이슈·지원 요청</h2><span class="hint">의사결정이나 타 부서 도움이 필요한 일 (선택)</span></div>
+  <section class="sec sec-elt"><div class="sec-h"><span class="no">05</span><h2>ELT 의사결정 필요 사항</h2><span class="hint">경영진 결정이 있어야 진행할 수 있는 안건 (선택) · 팀 현황 맨 위에 표시됩니다</span></div>
+    ${(r.decisions || []).length ? rowsBlock("decisions", r.decisions) : `<div class="row-head hidden" style="grid-template-columns:${getComputedStyleCols("decisions")}">${HEADS.decisions.map(x => `<span>${x}</span>`).join("")}</div><div class="rows" id="rows-decisions"></div>`}
+    <div><button type="button" class="btn sm" data-add="decisions">+ 안건 추가</button></div></section>
+  <section class="sec"><div class="sec-h"><span class="no">06</span><h2>이슈·지원 요청</h2><span class="hint">팀장·유관부서 지원이 필요한 일 (선택)</span></div>
     ${r.issues.length ? rowsBlock("issues", r.issues) : `<div class="row-head hidden" style="grid-template-columns:${getComputedStyleCols("issues")}">${HEADS.issues.map(x => `<span>${x}</span>`).join("")}</div><div class="rows" id="rows-issues"></div>`}
     <div><button type="button" class="btn sm" data-add="issues">+ 이슈 추가</button></div></section>
-  <section class="sec"><div class="sec-h"><span class="no">06</span><h2>공유 사항</h2><span class="hint">시장 동향, 환율·물류비, 경쟁사 소식 등 (선택)</span></div>
+  <section class="sec"><div class="sec-h"><span class="no">07</span><h2>공유 사항</h2><span class="hint">시장 동향, 환율·물류비, 경쟁사 소식 등 (선택)</span></div>
     <textarea id="f-notes" aria-label="공유 사항" placeholder="예: 두바이 현지 내륙 운송비가 전월 대비 약 8% 올랐습니다.">${esc(r.notes)}</textarea></section>
   <datalist id="targetList">${[leaderLabel(Store.team)].concat(Store.team.members.map(dispName), ISSUE_TARGETS).filter(Boolean).map(x => `<option value="${esc(x)}">`).join("")}</datalist>
   <ul class="errs hidden" id="f-errs"></ul>
@@ -908,10 +1026,11 @@ function readForm() {
     notes: g("f-notes").trim()
   };
   if (!TRIP_TYPES.includes(r.workType)) r.location = "";
-  ["tasks", "plans", "pipeline", "issues"].forEach(k => {
+  ["tasks", "plans", "pipeline", "issues", "decisions"].forEach(k => {
     r[k] = $$(`[data-row="${k}"]`, f).map(row => { const o = {}; $$("[data-f]", row).forEach(el => o[el.dataset.f] = el.value.trim()); return o; });
   });
   r.issues.forEach(x => x.resolved = x.resolved === "1");
+  r.decisions.forEach(p => { const n = Number(String(p.amount).replace(/[^0-9.]/g, "")); p.amount = p.amount === "" || isNaN(n) ? "" : n; });
   r.pipeline.forEach(p => { const n = Number(String(p.amount).replace(/[^0-9.]/g, "")); p.amount = p.amount === "" || isNaN(n) ? "" : n; });
   const m = memberById(Store.team, r.memberSel);
   r.memberId = m ? m.id : ""; r.memberName = m ? dispName(m) : r.newName;
@@ -923,6 +1042,7 @@ function cleanReport(r) {
   o.plans = r.plans.filter(t => t.content || t.client);
   o.pipeline = r.pipeline.filter(p => p.client);
   o.issues = r.issues.filter(x => x.content);
+  o.decisions = r.decisions.filter(x => x.title);
   return o;
 }
 function updatePreview() {
@@ -1014,7 +1134,7 @@ function filteredHistory() {
   const H = UI.hist; const q = H.q.trim().toLowerCase();
   return [...Store.reports.values()].filter(r =>
     (!H.member || r.memberId === H.member) && (!H.from || r.date >= H.from) && (!H.to || r.date <= H.to) &&
-    (!q || JSON.stringify([r.memberName, r.tasks, r.plans, r.pipeline, r.issues, r.notes, r.location]).toLowerCase().includes(q))
+    (!q || JSON.stringify([r.memberName, r.tasks, r.plans, r.pipeline, r.issues, r.decisions, r.notes, r.location]).toLowerCase().includes(q))
   ).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (a.memberName || "").localeCompare(b.memberName || "", "ko"));
 }
 function historyHTML() {
@@ -1034,7 +1154,7 @@ function historyHTML() {
         return `<tr class="click" data-open="${esc(r.id)}" tabindex="0"><td class="mono" style="white-space:nowrap">${fmtDate(r.date)}</td><td><b>${esc(r.memberName)}</b></td><td>${esc(r.region || "")}</td><td>${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</td>
         <td>${first ? (first.client ? `<b>${esc(first.client)}</b> ` : "") + esc(first.content) + ((r.tasks || []).length > 1 ? ` <span style="color:var(--muted)">외 ${(r.tasks || []).length - 1}건</span>` : "") : '<span style="color:var(--muted)">–</span>'}</td>
         <td class="n">${c.완료}</td><td class="n">${c.진행중 + c.대기}</td><td class="n" style="${c.지연 ? "color:var(--bad);font-weight:600" : ""}">${c.지연}</td>
-        <td>${iss.map(x => `<span class="pill l-${esc(x.level)}">${esc(x.level)}</span>`).join(" ")}</td><td class="mono" style="font-size:12px">${fmtTime(r.submittedAt)}</td></tr>`; }).join("")}
+        <td>${(r.decisions || []).filter(x => x.title && (!x.status || x.status === "대기")).length ? '<span class="pill p-bad">ELT</span> ' : ""}${iss.map(x => `<span class="pill l-${esc(x.level)}">${esc(x.level)}</span>`).join(" ")}</td><td class="mono" style="font-size:12px">${fmtTime(r.submittedAt)}</td></tr>`; }).join("")}
     </tbody></table></div>${list.length > 300 ? `<p class="empty">최근 300건만 표시합니다. 기간을 좁혀 보세요.</p>` : ""}`
     : `<p class="empty">${Store.reports.size ? "조건에 맞는 보고가 없습니다. 기간이나 검색어를 바꿔 보세요." : "아직 제출된 보고가 없습니다. ‘보고 작성’에서 첫 보고를 제출하세요."}</p>`}
   </section>`;
@@ -1047,13 +1167,14 @@ function exportTasks() {
   offerFile(`일일보고_업무내역_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
 }
 function exportSummary() {
-  const rows = [["날짜", "작성자", "지역", "근무형태", "출장지", "업무량", "완료", "진행중", "대기", "지연", "오늘 한 일", "다음 계획", "파이프라인", "이슈", "공유 사항", "제출 시각", "수정 시각"]];
+  const rows = [["날짜", "작성자", "지역", "근무형태", "출장지", "업무량", "완료", "진행중", "대기", "지연", "ELT 의사결정", "이슈", "오늘 한 일", "다음 계획", "파이프라인", "공유 사항", "제출 시각", "수정 시각"]];
   filteredHistory().forEach(r => { const c = countStatus(r);
     rows.push([r.date, r.memberName, r.region, r.workType, r.location, r.load, c.완료, c.진행중, c.대기, c.지연,
+      (r.decisions || []).filter(x => x.title).map(x => `[${x.status || "대기"}] ${x.title}${x.deadline ? " (기한 " + x.deadline + ")" : ""}${x.recommend ? " / 제안: " + x.recommend : ""}${x.result ? " / 결정: " + x.result : ""}`).join("\n"),
+      (r.issues || []).map(x => `[${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`).join("\n"),
       (r.tasks || []).map(t => `[${t.status}] ${t.client ? t.client + " – " : ""}${t.content}`).join("\n"),
       (r.plans || []).map(t => `${t.client ? t.client + " – " : ""}${t.content}`).join("\n"),
       (r.pipeline || []).map(p => `${p.client} ${p.stage} ${p.amount ? p.currency + " " + p.amount : ""}`).join("\n"),
-      (r.issues || []).map(x => `[${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`).join("\n"),
       r.notes, r.submittedAt, r.updatedAt]); });
   offerFile(`일일보고_요약_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
 }
@@ -1092,7 +1213,7 @@ function teamHTML() {
   const modeHelp = {
     claude: `<p>지금은 <b>Claude 아티팩트의 팀 공유 저장소</b>를 쓰고 있습니다. 이 페이지 링크를 공유받은 팀원이 작성하면 모두에게 실시간으로 보입니다.</p>
       <ol><li>오른쪽 위 <b>공유</b>에서 팀원을 초대하세요. 보고를 작성하려면 팀원에게 <b>편집</b> 권한(Team·Enterprise 요금제는 조직 구성원에게 <b>기여자</b> 이상)이 필요합니다.</li><li>보기만 하는 분은 보기 권한으로 충분합니다.</li></ol>`,
-    sheets: `<p>지금은 <b>Google Sheets</b>를 공유 저장소로 쓰고 있습니다. 이 페이지 <b>링크를 받은 사람은 누구나 로그인 없이 보고를 작성·수정</b>할 수 있고, 1분마다 새 보고를 가져옵니다. 시트에서 원본 데이터를 직접 볼 수 있습니다.</p>`,
+    sheets: `<p>지금은 <b>Google Sheets</b>를 공유 저장소로 쓰고 있습니다. 1분마다 새 보고를 가져옵니다. 시트에서 원본 데이터를 직접 볼 수 있습니다.</p>`,
     local: `<p>지금은 <b>이 브라우저에만 저장</b>되고 있어 다른 팀원과 공유되지 않습니다. 팀 전체가 쓰려면 둘 중 하나를 고르세요.</p>
       <ol><li><b>Claude 아티팩트</b>로 열고 공유: 별도 설정 없이 공유 저장소가 켜집니다.</li><li><b>GitHub Pages + Google Sheets</b>: 저장소의 <code>apps-script/Code.gs</code>를 Google Apps Script로 배포한 뒤, 웹 앱 주소를 <code>config.js</code>의 <code>SHEETS_API_URL</code>에 넣으세요. 자세한 순서는 README에 있습니다.</li></ol>`
   }[Store.mode] || "";
@@ -1114,12 +1235,12 @@ function teamHTML() {
         <button type="button" class="icon-btn" data-act="rmMember" data-i="${i}" aria-label="${esc(m.name)} 삭제">×</button></div>`).join("") || '<p class="empty">등록된 팀원이 없습니다.</p>'}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="addMember">+ 팀원 추가</button><span style="flex:1"></span>
         <button class="btn sm" data-act="resetTeam">되돌리기</button><button class="btn primary sm" data-act="saveTeam"${Store.canWrite ? "" : " disabled"}>팀원 목록 저장</button></div>
-      <p class="help" style="font-size:12px">팀원을 지워도 그 팀원이 낸 보고는 이력에 남습니다. 현지 시각 표시는 담당 지역 기준입니다.</p>
+      <p class="help" style="font-size:12px">팀원을 지워도 그 팀원이 낸 보고는 이력에 남습니다.</p>
     </div></section>
   <section class="card"><div class="card-h"><h2>저장 방식</h2><span class="pill ${Store.mode === "local" ? "p-warn" : "p-ok"}">${esc($("#modeBadge span").textContent)}</span></div>
     <div class="help">${modeHelp}</div>
     <div class="card-h" style="margin-top:18px"><h2>입력 항목 기준</h2></div>
-    <div class="help"><p><b>업무 구분</b> ${TASK_CATS.join(" · ")}</p><p style="margin-top:6px"><b>진행 상태</b> ${STATUSES.join(" · ")}</p><p style="margin-top:6px"><b>파이프라인 단계</b> ${STAGES.join(" → ")}</p><p style="margin-top:6px"><b>이슈 긴급도</b> 높음(오늘 결정 필요) · 보통(이번 주) · 낮음(참고)</p>
+    <div class="help"><p><b>업무 구분</b> ${TASK_CATS.join(" · ")}</p><p style="margin-top:6px"><b>진행 상태</b> ${STATUSES.join(" · ")}</p><p style="margin-top:6px"><b>파이프라인 단계</b> ${STAGES.join(" → ")}</p><p style="margin-top:6px"><b>ELT 의사결정</b> 경영진 결정이 필요한 안건. 결정 기한 순으로 팀 현황 맨 위에 표시되고, 결정·보류를 기록하면 목록에서 빠집니다</p><p style="margin-top:6px"><b>이슈 긴급도</b> 높음(오늘 결정 필요) · 보통(이번 주) · 낮음(참고)</p>
     <p style="margin-top:8px;font-size:12px">항목을 바꾸려면 index.html 상단의 상수(TASK_CATS, STAGES 등)를 수정하세요.</p></div></section></div>`;
 }
 function readTeamDraft() {
@@ -1194,6 +1315,19 @@ document.addEventListener("click", async e => {
     c.issues[i].resolved = true; c.issues[i].resolvedAt = new Date().toISOString();
     t.disabled = true;
     try { await backend.saveReport(c); toast("해결 처리했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
+  }
+  else if (a === "decide") { const box = document.getElementById("dec-" + t.dataset.key); if (box) { box.classList.toggle("hidden"); if (!box.classList.contains("hidden")) box.querySelector("textarea").focus(); } }
+  else if (a === "decideCancel") t.closest(".elt-decide").classList.add("hidden");
+  else if (a === "decideSave" || a === "reopen") {
+    const r = Store.reports.get(t.dataset.id); if (!r) return;
+    const c = clone(r); const i = Number(t.dataset.i); if (!c.decisions || !c.decisions[i]) return;
+    if (a === "decideSave") {
+      const res = t.closest(".elt-decide").querySelector("textarea").value.trim();
+      if (t.dataset.st === "결정" && !res) { toast("결정 내용을 적어 주세요."); return; }
+      Object.assign(c.decisions[i], { status: t.dataset.st, result: res, decidedAt: new Date().toISOString() });
+    } else Object.assign(c.decisions[i], { status: "대기", result: "", decidedAt: "" });
+    t.disabled = true;
+    try { await backend.saveReport(c); toast(a === "reopen" ? "결정 대기로 되돌렸습니다." : `‘${t.dataset.st}’으로 기록했습니다.`); } catch (err) { t.disabled = false; toast(err.message); }
   }
   else if (a === "pullPlans") pullPrevPlans();
   else if (a === "resetForm") { W.loadedId = null; W.notice = null; lsDel("bd-draft"); fillForm(emptyReport()); checkExisting(); }
