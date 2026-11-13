@@ -266,11 +266,32 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 /* ---------- modal & toast ---------- */
 .overlay{position:fixed;inset:0;background:rgba(10,18,22,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:20}
 .modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;max-width:760px;width:100%;padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal.wide{max-width:1120px}
+.modal.narrow{max-width:420px}
 .modal-h{display:flex;align-items:center;gap:10px}
 .modal-h .right{margin-left:auto;display:flex;gap:6px}
 .modal textarea{min-height:240px;font-family:var(--font-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.18)}
-/* 승인 · 코멘트 · 멘션 */
+/* 승인 · 댓글 · 멘션 */
+.mcard.click{cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.mcard.click:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.mcard .lastc{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mcard .lastc b{color:var(--ink);font-weight:600;margin-right:4px}
+.rd{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:18px;align-items:start}
+.rd-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.rd-sec h3{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px;letter-spacing:.02em}
+.rd-chips{display:flex;gap:6px;flex-wrap:wrap}
+.rd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rd-list li{display:flex;gap:8px;align-items:flex-start;font-size:13.5px}
+.rd-elt{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.rd-elt .rec{background:var(--accent-soft);border-radius:4px;padding:5px 8px}
+.rd-notes{white-space:pre-wrap;font-size:13.5px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.cpane{border:1px solid var(--line);border-radius:8px;background:var(--paper);display:flex;flex-direction:column;max-height:70vh;position:sticky;top:0}
+.cpane-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cpane-h h2{font-size:15px}
+.cpane-body{padding:12px 14px;overflow:auto;flex:1;min-height:120px}
+.cpane-foot{padding:12px 14px;border-top:1px solid var(--line);background:var(--surface);border-radius:0 0 8px 8px}
+@media (max-width:860px){ .rd{grid-template-columns:1fr} .cpane{position:static;max-height:none} }
 .top-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .viewer{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .viewer select{width:auto;padding:3px 8px;font-size:12.5px}
@@ -342,7 +363,7 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
         <div class="brand-text"><h1 id="teamTitle">해외사업팀 일일보고</h1><span class="sub" id="todayLabel"></span></div>
       </div>
       <div class="top-right">
-        <button type="button" class="btn sm bell hidden" id="bellBtn" data-act="inbox" aria-label="나를 언급한 코멘트">@ 알림 <span class="cnt hidden"></span></button>
+        <button type="button" class="btn sm bell hidden" id="bellBtn" data-act="inbox" aria-label="나를 언급한 댓글">@ 알림 <span class="cnt hidden"></span></button>
         <span class="viewer"><label for="viewerSel">나</label><select id="viewerSel" aria-label="보는 사람"></select></span>
         <span class="mode" id="modeBadge" data-mode="connecting"><i></i><span>연결 중</span></span>
       </div>
@@ -718,7 +739,7 @@ function renderMode() {
 }
 
 /* =========================================================
-   보는 사람 · 팀장 승인 · 코멘트(@멘션)
+   보는 사람 · 팀장 승인 · 댓글(@멘션)
    ========================================================= */
 const LEADER_ID = "leader";
 function people() {
@@ -727,14 +748,58 @@ function people() {
   return L.concat((t.members || []).map(m => ({ id: m.id, name: m.name, title: m.title || "", region: m.region || "" })));
 }
 const personById = id => people().find(p => p.id === id);
-const viewer = () => personById(lsGet("bd-viewer", "")) || null;
+/* 팀장 인증: 이호용 상무만 승인할 수 있도록 PIN(비밀번호)을 확인한다.
+   Google Sheets 모드에서는 Apps Script가 PIN을 검사하고 승인 기록도 서버에서만 바뀐다. */
+const ssGet = k => { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } };
+const ssSet = (k, v) => { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} };
+const leaderUnlocked = () => !!ssGet("bd-leader-pin");
+const viewer = () => { const p = personById(lsGet("bd-viewer", "")); if (!p) return null; if (p.lead && !leaderUnlocked()) return null; return p; };
 const isLeaderViewer = () => { const v = viewer(); return !!(v && v.lead); };
+function serverError(e) {
+  const m = (e && e.message) || String(e || "");
+  if (/알 수 없는 요청/.test(m)) return "Apps Script(Code.gs)를 새 버전으로 배포해야 팀장 인증·승인을 쓸 수 있습니다.";
+  return m || "요청을 처리하지 못했습니다.";
+}
+async function verifyLeader(pin) {
+  if (Store.mode === "sheets") { await backend.post({ action: "verifyLeader", pin }); return; }
+  if (Store.mode === "claude" && window.claude && window.claude.use) {
+    const u = await window.claude.use("user");
+    const own = u && typeof u.isOwner === "function" ? await u.isOwner() : false;
+    if (!own) throw new Error("이 페이지에서는 소유자만 팀장으로 인증할 수 있습니다.");
+    return;
+  }
+  if (!pin) throw new Error("비밀번호를 입력하세요.");
+}
+function askLeaderPin(after) {
+  const lead = Store.team.leader ? dispName(Store.team.leader) : "팀장";
+  const back = UI.modalReport;
+  openModal(`<div class="modal-h"><h2>${esc(lead)} 인증</h2></div>
+    <p class="help" style="font-size:13px">승인은 ${esc(lead)}만 할 수 있습니다. 팀장 비밀번호를 입력하세요. 이 브라우저 창을 닫으면 다시 입력해야 합니다.</p>
+    <label class="fl"><span>팀장 비밀번호</span><input type="password" id="leaderPin" autocomplete="current-password"></label>
+    <p class="notice bad hidden" id="pinErr"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" data-act="pinCancel">취소</button><button class="btn primary" id="pinOk">확인</button></div>`);
+  $(".modal").classList.add("narrow");
+  const inp = $("#leaderPin"); inp.focus();
+  const go = async () => {
+    const pin = inp.value.trim(); const btn = $("#pinOk"); btn.disabled = true;
+    try {
+      await verifyLeader(pin);
+      ssSet("bd-leader-pin", pin || "ok"); lsSet("bd-viewer", LEADER_ID);
+      closeModal(); render(); toast(`${lead}으로 인증했습니다.`);
+      if (back) openReport(back);
+      if (after) after();
+    } catch (e) { const er = $("#pinErr"); er.textContent = serverError(e); er.classList.remove("hidden"); btn.disabled = false; inp.select(); }
+  };
+  $("#pinOk").onclick = go;
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+  UI.pinBack = back;
+}
 const fmtStamp = iso => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const isApproved = r => !!(r && r.approval && r.approval.status === "승인");
 const editedAfterApproval = r => isApproved(r) && r.updatedAt && r.approval.at && r.updatedAt > r.approval.at;
 function renderViewer() {
   const sel = $("#viewerSel"); if (!sel) return;
-  const v = lsGet("bd-viewer", "");
+  const v = (viewer() || {}).id || "";
   if (document.activeElement !== sel)
     sel.innerHTML = `<option value="">이름 선택</option>` + people().map(p => `<option value="${esc(p.id)}"${p.id === v ? " selected" : ""}>${esc(dispName(p))}${p.lead ? " (팀장)" : ""}</option>`).join("");
   renderBell();
@@ -764,9 +829,9 @@ function openInbox() {
   const items = inboxItems().slice(0, 60);
   lsSet("bd-seen-" + v.id, new Date().toISOString()); renderBell();
   openModal(`<div class="modal-h"><h2>${esc(dispName(v))}님 알림</h2><span class="right"><button class="btn sm" data-act="closeModal">닫기</button></span></div>
-    <p class="help" style="font-size:12px">나를 @로 언급한 코멘트와 내 보고에 달린 코멘트입니다. 누르면 해당 보고가 열립니다.</p>
+    <p class="help" style="font-size:12px">나를 @로 언급한 댓글과 내 보고에 달린 댓글입니다. 누르면 해당 보고가 열립니다.</p>
     <div class="inbox">${items.length ? items.map(x => `<button type="button" class="inbox-item${(x.c.at || "") > seen ? " new" : ""}" data-open="${esc(x.r.id)}">
-      <span><b>${esc(x.c.authorName)}</b> ${x.mentioned ? "님이 나를 언급했습니다" : "님이 내 보고에 코멘트를 남겼습니다"}</span>
+      <span><b>${esc(x.c.authorName)}</b> ${x.mentioned ? "님이 나를 언급했습니다" : "님이 내 보고에 댓글을 남겼습니다"}</span>
       <span>${renderCommentText(x.c.text.length > 140 ? x.c.text.slice(0, 140) + "…" : x.c.text)}</span>
       <span class="by">${esc(x.r.memberName)} · ${fmtDate(x.r.date)} 보고 · ${fmtStamp(x.c.at)}</span></button>`).join("") : '<p class="empty">아직 알림이 없습니다.</p>'}</div>`);
 }
@@ -802,30 +867,59 @@ function approvalHTML(r, demo) {
       ${can ? `<span class="acts">${ed ? `<button class="btn sm primary" data-act="approve" data-id="${esc(r.id)}">다시 승인</button>` : ""}<button class="btn sm" data-act="unapprove" data-id="${esc(r.id)}">승인 취소</button></span>` : ""}</div>`;
   }
   return `<div class="appr"><span class="pill p-idle">승인 대기</span><span style="color:var(--muted)">${esc(leadName)} 승인 전입니다.</span>
-    ${can ? `<span class="acts"><button class="btn sm primary" data-act="approve" data-id="${esc(r.id)}">팀장 승인</button></span>` : ""}</div>`;
+    ${can ? `<span class="acts"><button class="btn sm primary" data-act="approve" data-id="${esc(r.id)}">팀장 승인</button></span>` : !demo ? `<span class="acts"><button class="btn sm ghost" data-act="leaderLogin">팀장 인증</button></span>` : ""}</div>`;
+}
+/* 보고 상세(구조화) */
+function reportDetailHTML(r) {
+  const wt = `<span class="pill ${OFF_TYPES.includes(r.workType) ? "p-info" : TRIP_TYPES.includes(r.workType) ? "p-accent" : "p-idle"}">${esc(r.workType || "")}${r.location ? " · " + esc(r.location) : ""}</span>`;
+  const chips = [wt, r.region ? `<span class="pill p-idle">${esc(r.region)}</span>` : "", `<span class="pill ${r.load === "과중" ? "p-bad" : r.load === "여유" ? "p-ok" : "p-idle"}">업무량 ${esc(r.load || "적정")}</span>`].join("");
+  const decs = (r.decisions || []).filter(x => x.title);
+  const iss = (r.issues || []).filter(x => x.content);
+  const tasks = (r.tasks || []).filter(t => t.content || t.client);
+  const plans = (r.plans || []).filter(t => t.content || t.client);
+  const pipe = (r.pipeline || []).filter(p => p.client);
+  const sec = (title, body) => `<section class="rd-sec"><h3>${title}</h3>${body}</section>`;
+  let h = `<div class="rd-chips">${chips}</div>`;
+  if (decs.length) h += sec(`ELT 의사결정 필요 사항 ${decs.length}`, decs.map(x => { const d = dday(x.deadline); const st = x.status || "대기";
+    return `<div class="rd-elt" style="border-left-color:${st === "대기" ? (d.lvl === 3 ? "var(--bad)" : d.lvl === 2 ? "var(--warn)" : "var(--accent)") : "var(--idle)"}">
+      <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span class="pill ${st === "결정" ? "p-ok" : st === "보류" ? "p-idle" : d.cls}">${st === "대기" ? d.txt : esc(st)}</span><b style="flex:1">${esc(x.title)}</b>${x.amount ? `<span class="num" style="font-weight:600">${esc(x.currency || "")} ${fmtAmt(x.amount)}</span>` : ""}</div>
+      ${x.deadline ? `<span style="font-size:12px;color:var(--muted)">결정 기한 ${fmtDate(x.deadline)}</span>` : ""}
+      ${x.detail ? `<div style="white-space:pre-wrap">${esc(x.detail)}</div>` : ""}
+      ${x.recommend ? `<div class="rec"><b style="color:var(--accent);margin-right:6px">제안</b>${esc(x.recommend)}</div>` : ""}
+      ${x.result ? `<div><b>${esc(st)}:</b> ${esc(x.result)}</div>` : ""}</div>`; }).join(""));
+  if (iss.length) h += sec(`이슈·지원 요청 ${iss.length}`, `<ul class="rd-list">${iss.map(x => `<li><span class="pill l-${esc(x.level)}">${esc(x.level)}</span><span style="flex:1${x.resolved ? ";text-decoration:line-through;color:var(--muted)" : ""}">${esc(x.content)}${x.target ? ` <span style="color:var(--muted)">→ ${esc(x.target)}</span>` : ""}</span>${x.resolved ? '<span class="pill p-ok">해결</span>' : ""}</li>`).join("")}</ul>`);
+  h += sec(`오늘 한 일 ${tasks.length}`, tasks.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>구분</th><th>거래처 / 프로젝트</th><th>내용</th><th>상태</th></tr></thead><tbody>${tasks.map(t => `<tr><td style="white-space:nowrap;color:var(--muted)">${esc(t.cat)}</td><td><b>${esc(t.client || "")}</b></td><td>${esc(t.content)}</td><td><span class="pill s-${esc(t.status)}">${esc(t.status)}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">${OFF_TYPES.includes(r.workType) ? "휴가" : "등록된 업무가 없습니다."}</p>`);
+  if (plans.length) h += sec(`다음 근무일 계획 ${plans.length}`, `<ul class="rd-list">${plans.map(p => `<li><span class="pill p-idle">${esc(p.cat || "기타")}</span><span>${p.client ? `<b>${esc(p.client)}</b> – ` : ""}${esc(p.content)}</span></li>`).join("")}</ul>`);
+  if (pipe.length) h += sec(`영업 파이프라인 변동 ${pipe.length}`, `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>거래처</th><th>국가</th><th>단계</th><th style="text-align:right">예상 금액</th><th>예상 시기</th></tr></thead><tbody>${pipe.map(p => `<tr title="${esc(p.note || "")}"><td><b>${esc(p.client)}</b>${p.note ? `<div style="font-size:12px;color:var(--muted)">${esc(p.note)}</div>` : ""}</td><td>${esc(p.country || "")}</td><td><span class="pill p-accent">${esc(p.stage)}</span></td><td class="n">${p.amount ? esc(p.currency) + " " + fmtAmt(p.amount) : "–"}</td><td>${esc(p.expected || "–")}</td></tr>`).join("")}</tbody></table></div>`);
+  if (r.notes) h += sec("공유 사항", `<div class="rd-notes">${esc(r.notes)}</div>`);
+  return h;
 }
 function threadHTML(r, demo) {
   const cs = r.comments || []; const v = viewer();
   const list = cs.length ? cs.map(c => { const p = personById(c.authorId);
     return `<div class="cmt"><span class="av${p && p.lead ? " lead" : ""}" aria-hidden="true">${esc(String(c.authorName || "?").replace(/\s.*$/, "").slice(-2))}</span><div class="bd">
       <div class="meta"><b>${esc(c.authorName || "")}</b><span>${fmtStamp(c.at)}</span>${v && c.authorId === v.id && !demo && Store.canWrite ? `<button class="btn sm ghost" data-act="delComment" data-id="${esc(r.id)}" data-cid="${esc(c.id)}">삭제</button>` : ""}</div>
-      <div class="tx">${renderCommentText(c.text || "")}</div></div></div>`; }).join("") : `<p class="empty">아직 코멘트가 없습니다.</p>`;
-  return `<div class="card-h" style="margin:0"><h2>코멘트</h2><span class="meta">${cs.length}개</span></div><div class="thread">${list}</div>`;
+      <div class="tx">${renderCommentText(c.text || "")}</div></div></div>`; }).join("") : `<p class="empty">아직 댓글이 없습니다.</p>`;
+  return `<div class="thread">${list}</div>`;
 }
 function composerHTML(r, demo) {
   if (demo) return "";
   const v = viewer();
-  if (!v) return `<p class="help" style="font-size:13px">코멘트를 남기려면 화면 오른쪽 위 ‘나’에서 본인 이름을 먼저 고르세요.</p>`;
-  return `<div class="composer"><div class="ta-wrap"><textarea id="cmtText" placeholder="코멘트를 입력하세요. @를 입력하면 사람을 지정할 수 있습니다." aria-label="코멘트" aria-autocomplete="list" aria-controls="mlist"></textarea><div class="mlist hidden" id="mlist" role="listbox"></div></div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="help" style="font-size:12px;flex:1">${esc(dispName(v))}(으)로 작성 · Ctrl+Enter로 등록</span><button class="btn sm primary" style="margin-left:auto" data-act="addComment" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>코멘트 등록</button></div></div>`;
+  if (!v) return `<p class="help" style="font-size:13px">댓글을 남기려면 화면 오른쪽 위 ‘나’에서 본인 이름을 먼저 고르세요.</p>`;
+  return `<div class="composer"><div class="ta-wrap"><textarea id="cmtText" placeholder="댓글을 입력하세요. @를 입력하면 사람을 지정할 수 있습니다." aria-label="댓글" aria-autocomplete="list" aria-controls="mlist"></textarea><div class="mlist hidden" id="mlist" role="listbox"></div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="help" style="font-size:12px;flex:1">${esc(dispName(v))}(으)로 작성 · Ctrl+Enter로 등록</span><button class="btn sm primary" style="margin-left:auto" data-act="addComment" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>댓글 등록</button></div></div>`;
 }
 function refreshModal() {
   const id = UI.modalReport; if (!id || !$("#mThread")) return;
   const f = findReport(id); if (!f) return;
   $("#mAppr").innerHTML = approvalHTML(f.r, f.demo);
-  $("#mThread").innerHTML = threadHTML(f.r, f.demo);
+  const tb = $("#mThread"); const atBottom = tb.scrollHeight - tb.scrollTop - tb.clientHeight < 40;
+  tb.innerHTML = threadHTML(f.r, f.demo);
+  if (atBottom) tb.scrollTop = tb.scrollHeight;
+  if ($("#mCount")) $("#mCount").textContent = `${(f.r.comments || []).length}개`;
+  if ($("#mDetail")) $("#mDetail").innerHTML = reportDetailHTML(f.r);
 }
-/* 저장 직전 최신본을 다시 읽어 다른 사람의 코멘트·승인을 덮어쓰지 않도록 함 (저장은 기존 saveReport 사용) */
+/* 저장 직전 최신본을 다시 읽어 다른 사람의 댓글·승인을 덮어쓰지 않도록 함 (저장은 기존 saveReport 사용) */
 async function mutateReport(id, fn) {
   if (backend && typeof backend.pull === "function") { try { await backend.pull(); } catch (e) {} }
   const cur = Store.reports.get(id);
@@ -857,18 +951,25 @@ function pickMention(p) {
 }
 async function addComment(id, btn) {
   const ta = $("#cmtText"); const v = viewer(); if (!ta || !v) return;
-  const text = ta.value.trim(); if (!text) { toast("코멘트 내용을 입력하세요."); return; }
+  const text = ta.value.trim(); if (!text) { toast("댓글 내용을 입력하세요."); return; }
   btn.disabled = true;
   const c = { id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), authorId: v.id, authorName: dispName(v), text, mentions: findMentions(text), at: new Date().toISOString() };
   try {
     await mutateReport(id, r => { r.comments = (r.comments || []).concat(c); });
-    ta.value = ""; refreshModal();
-    toast(c.mentions.length ? `${c.mentions.map(x => dispName(personById(x))).join(", ")}님을 언급했습니다.` : "코멘트를 등록했습니다.");
-  } catch (e) { toast(e.message || "코멘트를 저장하지 못했습니다."); }
+    ta.value = ""; refreshModal(); const tb = $("#mThread"); if (tb) tb.scrollTop = tb.scrollHeight;
+    toast(c.mentions.length ? `${c.mentions.map(x => dispName(personById(x))).join(", ")}님을 언급했습니다.` : "댓글을 등록했습니다.");
+  } catch (e) { toast(e.message || "댓글을 저장하지 못했습니다."); }
   finally { btn.disabled = !Store.canWrite; }
 }
 async function setApproval(id, on) {
   const v = viewer();
+  if (!v || !v.lead) throw new Error("팀장 인증 후 승인할 수 있습니다.");
+  if (Store.mode === "sheets") {
+    try { await backend.post({ action: "setApproval", id, approve: !!on, pin: ssGet("bd-leader-pin") }); }
+    catch (e) { if (/비밀번호/.test(e.message || "")) ssSet("bd-leader-pin", ""); throw new Error(serverError(e)); }
+    await backend.pull();
+    return;
+  }
   await mutateReport(id, r => { r.approval = on ? { status: "승인", by: LEADER_ID, byName: dispName(v), at: new Date().toISOString() } : null; });
 }
 
@@ -988,11 +1089,13 @@ function memberCard(m, r, demo) {
   const plans = (r.plans || []).filter(t => t.content);
   const iss = (r.issues || []).filter(x => x.content && !x.resolved);
   const decN = (r.decisions || []).filter(x => x.title && (!x.status || x.status === "대기")).length;
-  return `<article class="mcard">
+  const cs = r.comments || []; const lastC = cs[cs.length - 1];
+  return `<article class="mcard click" data-open="${esc(r.id)}" tabindex="0" aria-label="${esc(r.memberName || dispName(m))} 보고 상세 보기">
     <div class="who"><b>${esc(r.memberName || dispName(m))}</b>${reg}<span class="pill ${wtPill}">${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</span>${loadPill}<span class="t">${fmtTime(r.submittedAt)}</span></div>
     ${tasks.length ? `<ul class="tasklist">${tasks.map(t => `<li><span class="pill s-${esc(t.status)}">${esc(t.status)}</span><span><span class="cat">${esc(t.cat)}</span> ${t.client ? `<span class="cl">${esc(t.client)}</span> ` : ""}${esc(t.content)}</span></li>`).join("")}</ul>` : `<p class="empty">${OFF_TYPES.includes(r.workType) ? "휴가" : "등록된 업무 없음"}</p>`}
     ${plans.length ? `<div><div class="sublabel">다음 근무일</div><ul class="plans">${plans.map(p => `<li>${p.client ? esc(p.client) + " – " : ""}${esc(p.content)}</li>`).join("")}</ul></div>` : ""}
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${approvalPill(r)}${(r.comments || []).length ? `<span class="pill p-accent">코멘트 ${(r.comments || []).length}</span>` : ""}${!demo && isLeaderViewer() && (!isApproved(r) || editedAfterApproval(r)) ? `<button class="btn sm primary" data-act="approve" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>승인</button>` : ""}${decN ? `<span class="pill p-bad">ELT 결정 요청 ${decN}</span>` : ""}${iss.length ? iss.map(x => `<span class="pill l-${esc(x.level)}">이슈 ${esc(x.level)}</span>`).join("") : ""}<button class="btn sm ghost" style="margin-left:auto" data-open="${esc(r.id)}">전문 보기</button></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${approvalPill(r)}${!demo && isLeaderViewer() && (!isApproved(r) || editedAfterApproval(r)) ? `<button class="btn sm primary" data-act="approve" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>승인</button>` : ""}${decN ? `<span class="pill p-bad">ELT 결정 요청 ${decN}</span>` : ""}${iss.length ? iss.map(x => `<span class="pill l-${esc(x.level)}">이슈 ${esc(x.level)}</span>`).join("") : ""}<button class="btn sm ghost" style="margin-left:auto" data-act="openComments" data-id="${esc(r.id)}">댓글${cs.length ? " " + cs.length : " 달기"}</button></div>
+    ${lastC ? `<div class="lastc"><b>${esc(lastC.authorName)}</b>${renderCommentText(lastC.text || "")}</div>` : ""}
   </article>`;
 }
 function eltList(all, date) {
@@ -1343,7 +1446,7 @@ function historyHTML() {
       <label class="fl"><span>종료일</span><input type="date" id="h-to" value="${esc(H.to)}"></label>
       <label class="fl"><span>검색</span><input type="search" id="h-q" value="${esc(H.q)}" placeholder="거래처, 내용, 출장지…"></label>
     </div>
-    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>작성자</th><th>지역</th><th>근무</th><th>주요 업무</th><th style="text-align:right">완료</th><th style="text-align:right">진행</th><th style="text-align:right">지연</th><th>이슈</th><th>승인</th><th>코멘트</th><th>제출</th></tr></thead><tbody>
+    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>작성자</th><th>지역</th><th>근무</th><th>주요 업무</th><th style="text-align:right">완료</th><th style="text-align:right">진행</th><th style="text-align:right">지연</th><th>이슈</th><th>승인</th><th>댓글</th><th>제출</th></tr></thead><tbody>
       ${list.slice(0, 300).map(r => { const c = countStatus(r); const iss = (r.issues || []).filter(x => !x.resolved); const first = (r.tasks || [])[0];
         return `<tr class="click" data-open="${esc(r.id)}" tabindex="0"><td class="mono" style="white-space:nowrap">${fmtDate(r.date)}</td><td><b>${esc(r.memberName)}</b></td><td>${esc(r.region || "")}</td><td>${esc(r.workType)}${r.location ? " · " + esc(r.location) : ""}</td>
         <td>${first ? (first.client ? `<b>${esc(first.client)}</b> ` : "") + esc(first.content) + ((r.tasks || []).length > 1 ? ` <span style="color:var(--muted)">외 ${(r.tasks || []).length - 1}건</span>` : "") : '<span style="color:var(--muted)">–</span>'}</td>
@@ -1361,7 +1464,7 @@ function exportTasks() {
   offerFile(`일일보고_업무내역_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
 }
 function exportSummary() {
-  const rows = [["날짜", "작성자", "지역", "근무형태", "출장지", "업무량", "완료", "진행중", "대기", "지연", "ELT 의사결정", "이슈", "오늘 한 일", "다음 계획", "파이프라인", "공유 사항", "제출 시각", "수정 시각", "팀장 승인", "승인자", "승인 시각", "코멘트"]];
+  const rows = [["날짜", "작성자", "지역", "근무형태", "출장지", "업무량", "완료", "진행중", "대기", "지연", "ELT 의사결정", "이슈", "오늘 한 일", "다음 계획", "파이프라인", "공유 사항", "제출 시각", "수정 시각", "팀장 승인", "승인자", "승인 시각", "댓글"]];
   filteredHistory().forEach(r => { const c = countStatus(r);
     rows.push([r.date, r.memberName, r.region, r.workType, r.location, r.load, c.완료, c.진행중, c.대기, c.지연,
       (r.decisions || []).filter(x => x.title).map(x => `[${x.status || "대기"}] ${x.title}${x.deadline ? " (기한 " + x.deadline + ")" : ""}${x.recommend ? " / 제안: " + x.recommend : ""}${x.result ? " / 결정: " + x.result : ""}`).join("\n"),
@@ -1471,13 +1574,23 @@ function openReport(id) {
       ${f.demo ? "" : `<button class="btn sm" data-act="editReport" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>수정</button><button class="btn sm danger" data-act="askDelete" data-id="${esc(r.id)}"${Store.canWrite ? "" : " disabled"}>삭제</button>`}
       <button class="btn sm" data-act="closeModal">닫기</button></span></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)"><span>제출 ${fmtTime(r.submittedAt)}</span>${r.updatedAt && r.updatedAt !== r.submittedAt ? `<span>· 최종 수정 ${new Date(r.updatedAt).toLocaleString("ko-KR")}</span>` : ""}${f.demo ? '<span class="pill p-accent">예시</span>' : ""}</div>
-    <pre id="mText" style="margin:0;white-space:pre-wrap;font-family:var(--font-body);font-size:13px;line-height:1.65;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px">${esc(txt)}</pre>
     <div id="mAppr">${approvalHTML(r, f.demo)}</div>
-    <div id="mThread">${threadHTML(r, f.demo)}</div>
-    <div id="mComposer">${composerHTML(r, f.demo)}</div>
-    <div id="mConfirm"></div>`);
+    <div id="mConfirm"></div>
+    <div class="rd">
+      <div class="rd-main" id="mDetail">${reportDetailHTML(r)}</div>
+      <aside class="cpane" aria-label="댓글 창">
+        <div class="cpane-h"><h2>댓글</h2><span class="meta" id="mCount" style="color:var(--muted);font-size:12px">${(r.comments || []).length}개</span></div>
+        <div class="cpane-body" id="mThread">${threadHTML(r, f.demo)}</div>
+        <div class="cpane-foot" id="mComposer">${composerHTML(r, f.demo)}</div>
+      </aside>
+    </div>
+    <pre id="mText" class="hidden">${esc(txt)}</pre>`);
+  $(".modal").classList.add("wide");
   UI.modalReport = id;
-  $("#mCopy").onclick = () => copyText(txt, $("#mText"));
+  const tb = $("#mThread"); if (tb) tb.scrollTop = tb.scrollHeight;
+  if (UI.focusComment && $("#cmtText")) { $("#cmtText").focus(); }
+  UI.focusComment = false;
+  $("#mCopy").onclick = () => copyText(txt, null);
 }
 
 /* =========================================================
@@ -1515,8 +1628,11 @@ document.addEventListener("click", async e => {
     try { await mutateReport(t.dataset.id, c => { if (c.issues && c.issues[i]) { c.issues[i].resolved = true; c.issues[i].resolvedAt = new Date().toISOString(); } }); toast("해결 처리했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
   }
   else if (a === "inbox") openInbox();
+  else if (a === "openComments") { UI.focusComment = true; openReport(t.dataset.id); }
+  else if (a === "leaderLogin") askLeaderPin();
+  else if (a === "pinCancel") { const b = UI.pinBack; closeModal(); renderViewer(); if (b) openReport(b); }
   else if (a === "approve" || a === "unapprove") {
-    if (!isLeaderViewer()) { toast("팀장만 승인할 수 있습니다."); return; }
+    if (!isLeaderViewer()) { toast("팀장 인증 후 승인할 수 있습니다."); return; }
     t.disabled = true;
     try { await setApproval(t.dataset.id, a === "approve"); refreshModal(); toast(a === "approve" ? "승인했습니다." : "승인을 취소했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
   }
@@ -1531,7 +1647,7 @@ document.addEventListener("click", async e => {
   else if (a === "delComment") {
     const v = viewer(); const cid = t.dataset.cid;
     t.disabled = true;
-    try { await mutateReport(t.dataset.id, c => { c.comments = (c.comments || []).filter(x => !(x.id === cid && v && x.authorId === v.id)); }); refreshModal(); toast("코멘트를 삭제했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
+    try { await mutateReport(t.dataset.id, c => { c.comments = (c.comments || []).filter(x => !(x.id === cid && v && x.authorId === v.id)); }); refreshModal(); toast("댓글을 삭제했습니다."); } catch (err) { t.disabled = false; toast(err.message); }
   }
   else if (a === "decide") { const box = document.getElementById("dec-" + t.dataset.key); if (box) { box.classList.toggle("hidden"); if (!box.classList.contains("hidden")) box.querySelector("textarea").focus(); } }
   else if (a === "decideCancel") t.closest(".elt-decide").classList.add("hidden");
@@ -1576,7 +1692,7 @@ document.addEventListener("keydown", e => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); const b = $('[data-act="addComment"]'); if (b && !b.disabled) addComment(b.dataset.id, b); return; }
   }
   if (e.key === "Escape" && $("#modalRoot").innerHTML) closeModal();
-  if (e.key === "Enter" && e.target.matches("tr[data-open]")) openReport(e.target.dataset.open);
+  if (e.key === "Enter" && e.target.matches("tr[data-open], article[data-open]")) openReport(e.target.dataset.open);
 });
 document.addEventListener("input", e => {
   if (e.target.closest("#reportForm")) {
@@ -1592,8 +1708,11 @@ document.addEventListener("change", e => {
   else if (id === "h-member" || id === "h-from" || id === "h-to") { UI.hist[id.slice(2)] = e.target.value; render(); }
   else if (id === "importFile" && e.target.files[0]) importJson(e.target.files[0]);
   else if (id === "viewerSel") {
+    const p = personById(e.target.value);
+    if (p && p.lead && !leaderUnlocked()) { e.target.value = (viewer() || {}).id || ""; askLeaderPin(); return; }
+    if (!p || !p.lead) ssSet("bd-leader-pin", "");
     lsSet("bd-viewer", e.target.value);
-    const p = personById(e.target.value); if (p && !p.lead) lsSet("bd-me", p.id);
+    if (p && !p.lead) lsSet("bd-me", p.id);
     render(); if (UI.modalReport) openReport(UI.modalReport);
   }
   else if (id === "f-member") {

@@ -7,6 +7,13 @@
  *   - 액세스 권한이 있는 사용자: 모든 사용자
  * 코드를 고친 뒤에는 배포 관리 → 수정(연필) → 버전: 새 버전 → 배포 해야 반영됩니다.
  *
+ * 팀장 승인 (이호용 상무 전용)
+ *   프로젝트 설정(톱니바퀴) → 스크립트 속성 → 속성 추가
+ *     속성: LEADER_PIN   값: 팀장 비밀번호 (6자 이상 권장, 팀장님만 알도록)
+ *   - 승인/승인 취소는 setApproval 요청으로만 바뀌며, 비밀번호가 맞을 때만 처리됩니다.
+ *   - 일반 저장(saveReport)으로 들어온 승인 정보는 무시하고 시트에 있던 값을 유지합니다.
+ *   - 비밀번호를 5번 틀리면 10분 동안 잠깁니다.
+ *
  * 시트 구성 (자동 생성)
  *   reports  : 보고 1건 1행 (마지막 json 열이 원본. 직접 고치지 마세요)
  *   tasks    : 업무 1건 1행 (오늘 한 일 + 다음 근무일 계획) → 피벗·필터 분석용
@@ -44,6 +51,8 @@ function doPost(e) {
     if (body.action === "saveTeam") { saveTeam_(body.team); return out_({ ok: true }); }
     if (body.action === "saveReport") { saveReport_(body.report); return out_({ ok: true }); }
     if (body.action === "deleteReport") { deleteReport_(String(body.id || "")); return out_({ ok: true }); }
+    if (body.action === "verifyLeader") { checkLeaderPin_(body.pin); return out_({ ok: true }); }
+    if (body.action === "setApproval") { checkLeaderPin_(body.pin); setApproval_(String(body.id || ""), !!body.approve); return out_({ ok: true }); }
     return out_({ ok: false, error: "알 수 없는 요청입니다: " + body.action });
   } catch (err) {
     return out_({ ok: false, error: String(err && err.message || err) });
@@ -83,8 +92,13 @@ function readReports_() {
     .filter(function (r) { return r && r.id; });
 }
 
-function saveReport_(r) {
+function saveReport_(r, trusted) {
   if (!r || !r.id || !r.date) throw new Error("보고 형식이 올바르지 않습니다.");
+  if (!trusted) {
+    // 승인 정보는 팀장 인증(setApproval)으로만 바뀜: 시트에 저장된 값을 그대로 유지
+    var prev = readReportById_(r.id);
+    if (prev && prev.approval) r.approval = prev.approval; else delete r.approval;
+  }
   var c = { 완료: 0, 진행중: 0, 대기: 0, 지연: 0 };
   (r.tasks || []).forEach(function (t) { if (c[t.status] != null) c[t.status]++; });
   var open = (r.issues || []).filter(function (x) { return x.content && !x.resolved; }).length;
@@ -107,6 +121,40 @@ function saveReport_(r) {
   replaceChildRows_("pipeline", r.id, pipe);
   var decs = (r.decisions || []).filter(function (x) { return x && x.title; }).map(function (x, i) { return [r.id, r.date, r.memberName || "", i + 1, x.title || "", x.deadline || "", x.amount === "" || x.amount == null ? "" : Number(x.amount), x.currency || "", x.detail || "", x.recommend || "", x.status || "대기", x.result || "", x.decidedAt || ""]; });
   replaceChildRows_("decisions", r.id, decs);
+}
+
+/* ---------------- 팀장 승인 ---------------- */
+function checkLeaderPin_(pin) {
+  var want = PropertiesService.getScriptProperties().getProperty("LEADER_PIN");
+  if (!want) throw new Error("팀장 비밀번호가 아직 설정되지 않았습니다. Apps Script 프로젝트 설정의 스크립트 속성에 LEADER_PIN을 추가하세요.");
+  var cache = CacheService.getScriptCache();
+  var fails = Number(cache.get("leaderPinFails") || 0);
+  if (fails >= 5) throw new Error("비밀번호를 여러 번 틀려 10분 동안 잠겼습니다. 잠시 후 다시 시도하세요.");
+  if (String(pin || "") !== String(want)) {
+    cache.put("leaderPinFails", String(fails + 1), 600);
+    throw new Error("팀장 비밀번호가 맞지 않습니다.");
+  }
+  cache.remove("leaderPinFails");
+}
+
+function setApproval_(id, approve) {
+  var r = readReportById_(id);
+  if (!r) throw new Error("보고를 찾지 못했습니다. 새로고침 후 다시 시도하세요.");
+  if (approve) {
+    var team = readTeam_() || {};
+    var L = team.leader || {};
+    r.approval = { status: "승인", by: "leader", byName: (L.name || "팀장") + (L.title ? " " + L.title : ""), at: new Date().toISOString() };
+  } else {
+    r.approval = null;
+  }
+  saveReport_(r, true);
+}
+
+function readReportById_(id) {
+  var sh = sheet_("reports");
+  var idx = findRow_(sh, id);
+  if (!idx) return null;
+  try { return JSON.parse(sh.getRange(idx, HEAD.reports.length).getValue()); } catch (x) { return null; }
 }
 
 function deleteReport_(id) {
