@@ -1164,13 +1164,12 @@ function statusHTML() {
       return `<td><button class="cell ${cls}${x === date ? " sel" : ""}" data-act="goto" data-d="${x}" title="${esc(m.name)} ${fmtDate(x)}: ${r ? "제출" : "미제출"}" aria-label="${esc(m.name)} ${fmtDate(x)} ${r ? "제출" : "미제출"}"></button></td>`;
     }).join("")}</tr>`).join("")}</tbody></table></div>
     <div class="legend"><span><span class="cell done"></span>제출</span><span><span class="cell"></span>미제출</span></div>` : `<p class="empty">팀원을 등록하면 근무일별 제출 현황이 표시됩니다.</p>`;
-  h += `<div class="card"><div class="card-h"><h2>제출 현황</h2><span class="meta">이름을 누르면 보고 전문이 열립니다 · 표의 칸을 누르면 그 날짜로 이동합니다</span></div>
-    <div class="chips" style="margin-bottom:14px">${chips || '<span class="empty">등록된 팀원이 없습니다.</span>'}</div>${matrix}</div>`;
-
   // 팀원별 카드 + 이슈/파이프라인
   const cards = members.map(m => memberCard(m, byMember.get(m.id), demo)).concat(extra.map(r => memberCard({ id: r.memberId, name: r.memberName, region: r.region }, r, demo))).join("");
   h += `<div class="grid2"><section class="card" style="padding:16px"><div class="card-h"><h2>팀원별 업무</h2><span class="meta">${fmtDate(date)} 제출분</span></div><div class="members">${cards || '<p class="empty">아직 팀원이 없습니다.</p>'}</div></section>
     <div style="display:flex;flex-direction:column;gap:16px">${pipelineCard(all, date)}</div></div>`;
+  h += `<div class="card"><div class="card-h"><h2>제출 현황</h2><span class="meta">이름을 누르면 보고 전문이 열립니다 · 표의 칸을 누르면 그 날짜로 이동합니다</span></div>
+    <div class="chips" style="margin-bottom:14px">${chips || '<span class="empty">등록된 팀원이 없습니다.</span>'}</div>${matrix}</div>`;
   return h;
 }
 function memberCard(m, r, demo) {
