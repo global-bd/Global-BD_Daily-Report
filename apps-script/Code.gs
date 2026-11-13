@@ -12,6 +12,7 @@
  *   tasks    : 업무 1건 1행 (오늘 한 일 + 다음 근무일 계획) → 피벗·필터 분석용
  *   issues   : 이슈 1건 1행
  *   pipeline : 파이프라인 변동 1건 1행
+ *   decisions: ELT 의사결정 안건 1건 1행
  *   team     : 팀 구성 (B1 셀이 원본 JSON, 3행부터 보기용 목록)
  */
 
@@ -20,7 +21,8 @@ var HEAD = {
     "tasks", "done", "inProgress", "waiting", "delayed", "openIssues", "notes", "submittedAt", "updatedAt", "json"],
   tasks: ["reportId", "date", "memberName", "region", "kind", "cat", "client", "content", "status"],
   issues: ["reportId", "date", "memberName", "no", "level", "content", "target", "resolved", "resolvedAt"],
-  pipeline: ["reportId", "date", "memberName", "client", "country", "stage", "amount", "currency", "expected", "note"]
+  pipeline: ["reportId", "date", "memberName", "client", "country", "stage", "amount", "currency", "expected", "note"],
+  decisions: ["reportId", "date", "memberName", "no", "title", "deadline", "amount", "currency", "detail", "recommend", "status", "result", "decidedAt"]
 };
 
 function doGet(e) {
@@ -103,6 +105,8 @@ function saveReport_(r) {
   replaceChildRows_("tasks", r.id, tasks);
   replaceChildRows_("issues", r.id, issues);
   replaceChildRows_("pipeline", r.id, pipe);
+  var decs = (r.decisions || []).filter(function (x) { return x && x.title; }).map(function (x, i) { return [r.id, r.date, r.memberName || "", i + 1, x.title || "", x.deadline || "", x.amount === "" || x.amount == null ? "" : Number(x.amount), x.currency || "", x.detail || "", x.recommend || "", x.status || "대기", x.result || "", x.decidedAt || ""]; });
+  replaceChildRows_("decisions", r.id, decs);
 }
 
 function deleteReport_(id) {
@@ -113,6 +117,7 @@ function deleteReport_(id) {
   replaceChildRows_("tasks", id, []);
   replaceChildRows_("issues", id, []);
   replaceChildRows_("pipeline", id, []);
+  replaceChildRows_("decisions", id, []);
 }
 
 /* ---------------- helpers ---------------- */
@@ -158,5 +163,5 @@ function out_(obj) {
 
 /** 편집기에서 한 번 실행하면 시트가 미리 만들어지고 권한 승인 창이 뜹니다. */
 function setup() {
-  ["reports", "tasks", "issues", "pipeline", "team"].forEach(sheet_);
+  ["reports", "tasks", "issues", "pipeline", "decisions", "team"].forEach(sheet_);
 }
