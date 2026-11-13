@@ -713,7 +713,7 @@ function countStatus(r) {
 }
 function reportText(r, teamName) {
   const L = [];
-  L.push(`[${teamName || CFG.TEAM_NAME} 일일보고] ${fmtDate(r.date)} · ${r.memberName || "작성자"}${r.region ? " · " + r.region : ""}`);
+  L.push(`[${teamName || CFG.TEAM_NAME} 일일보고] ${fmtDate(r.date)} · ${r.memberName || "작성자"}`);
   const decs = (r.decisions || []).filter(x => x.title);
   if (decs.length) {
     L.push("", "■ ELT 의사결정 필요 사항");
@@ -972,7 +972,7 @@ function approvalHTML(r, demo) {
 }
 /* 보고 상세(구조화) */
 function reportDetailHTML(r) {
-  const chips = r.region ? `<span class="pill p-idle">${esc(r.region)}</span>` : "";
+  const chips = "";
   const decs = (r.decisions || []).filter(x => x.title);
   const iss = (r.issues || []).filter(x => x.content);
   const tasks = (r.tasks || []).filter(t => t.content || t.client);
@@ -1348,7 +1348,6 @@ function formHTML(r) {
       <label class="fl"><span>작성일 <em>*</em></span><input type="date" id="f-date" value="${esc(r.date)}" required></label>
       <label class="fl"><span>작성자 <em>*</em></span><select id="f-member">${memberOptions(memberSel)}</select></label>
       <label class="fl${memberSel === "__new" ? "" : " hidden"}" id="newNameWrap"><span>이름 <em>*</em></span><input type="text" id="f-newname" placeholder="예: 김도윤" autocomplete="name"></label>
-      <label class="fl"><span>담당 지역</span><select id="f-region"><option value="">선택</option>${REGIONS.map(x => `<option${x.k === r.region ? " selected" : ""}>${x.k}</option>`).join("")}</select></label>
     </div></section>
   <section class="sec"><div class="sec-h"><span class="no">02</span><h2>오늘 한 일</h2><span class="hint">업무마다 한 줄씩</span><span class="right"><button type="button" class="btn sm" data-act="pullPlans">이전 계획 불러오기</button></span></div>
     ${rowsBlock("tasks", r.tasks.length ? r.tasks : [blank.tasks()])}
@@ -1413,12 +1412,12 @@ function readForm() {
   const f = $("#reportForm");
   const g = id => { const el = f.querySelector("#" + id); return el ? el.value : ""; };
   const r = {
-    date: g("f-date"), memberSel: g("f-member"), newName: g("f-newname").trim(), region: g("f-region"),
+    date: g("f-date"), memberSel: g("f-member"), newName: g("f-newname").trim(), region: "",
     workType: "", location: "", load: "",
     notes: g("f-notes").trim()
   };
   const ex0 = W.loadedId && Store.reports.get(W.loadedId);
-  if (ex0) { r.workType = ex0.workType || ""; r.location = ex0.location || ""; r.load = ex0.load || ""; }
+  if (ex0) { r.region = ex0.region || ""; r.workType = ex0.workType || ""; r.location = ex0.location || ""; r.load = ex0.load || ""; }
   ["tasks", "plans", "pipeline", "issues", "decisions"].forEach(k => {
     r[k] = $$(`[data-row="${k}"]`, f).map(row => { const o = {}; $$("[data-f]", row).forEach(el => o[el.dataset.f] = el.value.trim()); return o; });
   });
@@ -1543,9 +1542,9 @@ function historyHTML() {
       <label class="fl"><span>종료일</span><input type="date" id="h-to" value="${esc(H.to)}"></label>
       <label class="fl"><span>검색</span><input type="search" id="h-q" value="${esc(H.q)}" placeholder="거래처, 내용, 댓글…"></label>
     </div>
-    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>작성자</th><th>지역</th><th>주요 업무</th><th style="text-align:right">완료</th><th style="text-align:right">진행</th><th style="text-align:right">지연</th><th>이슈</th><th>승인</th><th>댓글</th><th>제출</th></tr></thead><tbody>
+    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>날짜</th><th>작성자</th><th>주요 업무</th><th style="text-align:right">완료</th><th style="text-align:right">진행</th><th style="text-align:right">지연</th><th>이슈</th><th>승인</th><th>댓글</th><th>제출</th></tr></thead><tbody>
       ${list.slice(0, 300).map(r => { const c = countStatus(r); const iss = (r.issues || []).filter(x => !x.resolved); const first = (r.tasks || [])[0];
-        return `<tr class="click" data-open="${esc(r.id)}" tabindex="0"><td class="mono" style="white-space:nowrap">${fmtDate(r.date)}</td><td><b>${esc(r.memberName)}</b></td><td>${esc(r.region || "")}</td>
+        return `<tr class="click" data-open="${esc(r.id)}" tabindex="0"><td class="mono" style="white-space:nowrap">${fmtDate(r.date)}</td><td><b>${esc(r.memberName)}</b></td>
         <td>${first ? (first.client ? `<b>${esc(first.client)}</b> ` : "") + esc(first.content) + ((r.tasks || []).length > 1 ? ` <span style="color:var(--muted)">외 ${(r.tasks || []).length - 1}건</span>` : "") : '<span style="color:var(--muted)">–</span>'}</td>
         <td class="n">${c.완료}</td><td class="n">${c.진행중 + c.대기}</td><td class="n" style="${c.지연 ? "color:var(--bad);font-weight:600" : ""}">${c.지연}</td>
         <td>${(r.decisions || []).filter(x => x.title && (!x.status || x.status === "대기")).length ? '<span class="pill p-bad">ELT</span> ' : ""}${iss.map(x => `<span class="pill l-${esc(x.level)}">${esc(x.level)}</span>`).join(" ")}</td><td>${isApproved(r) ? approvalPill(r) : '<span style="color:var(--muted)">–</span>'}</td><td class="n">${(r.comments || []).length || ""}</td><td class="mono" style="font-size:12px">${fmtTime(r.submittedAt)}</td></tr>`; }).join("")}
@@ -1556,14 +1555,14 @@ function historyHTML() {
 function csvCell(v) { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
 function toCSV(rows) { return "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\r\n"); }
 function exportTasks() {
-  const rows = [["날짜", "작성자", "지역", "구분", "고객사/프로젝트/기타", "내용", "상태"]];
-  filteredHistory().forEach(r => (r.tasks || []).forEach(t => rows.push([r.date, r.memberName, r.region, normCat(t.cat), t.client, t.content, t.status])));
+  const rows = [["날짜", "작성자", "구분", "고객사/프로젝트/기타", "내용", "상태"]];
+  filteredHistory().forEach(r => (r.tasks || []).forEach(t => rows.push([r.date, r.memberName, normCat(t.cat), t.client, t.content, t.status])));
   offerFile(`일일보고_업무내역_${UI.hist.from}_${UI.hist.to}.csv`, toCSV(rows));
 }
 function exportSummary() {
-  const rows = [["날짜", "작성자", "지역", "완료", "진행중", "대기", "지연", "ELT 의사결정", "이슈", "오늘 한 일", "다음 계획", "파이프라인", "공유 사항", "제출 시각", "수정 시각", "팀장 승인", "승인자", "승인 시각", "댓글"]];
+  const rows = [["날짜", "작성자", "완료", "진행중", "대기", "지연", "ELT 의사결정", "이슈", "오늘 한 일", "다음 계획", "파이프라인", "공유 사항", "제출 시각", "수정 시각", "팀장 승인", "승인자", "승인 시각", "댓글"]];
   filteredHistory().forEach(r => { const c = countStatus(r);
-    rows.push([r.date, r.memberName, r.region, c.완료, c.진행중, c.대기, c.지연,
+    rows.push([r.date, r.memberName, c.완료, c.진행중, c.대기, c.지연,
       (r.decisions || []).filter(x => x.title).map(x => `[${x.status || "대기"}] ${x.title}${x.deadline ? " (기한 " + x.deadline + ")" : ""}${x.recommend ? " / 제안: " + x.recommend : ""}${x.result ? " / 결정: " + x.result : ""}`).join("\n"),
       (r.issues || []).map(x => `[${x.level}] ${x.content}${x.target ? " → " + x.target : ""}${x.resolved ? " (해결)" : ""}`).join("\n"),
       (r.tasks || []).map(t => `[${t.status}] ${t.client ? t.client + " – " : ""}${t.content}`).join("\n"),
@@ -1827,7 +1826,6 @@ document.addEventListener("change", e => {
   else if (id === "f-member") {
     $("#newNameWrap").classList.toggle("hidden", e.target.value !== "__new");
     const m = memberById(Store.team, e.target.value);
-    if (m && m.region) $("#f-region").value = m.region;
     if (e.target.value === "__new") $("#f-newname").focus();
     checkExisting(); updatePreview();
   }
