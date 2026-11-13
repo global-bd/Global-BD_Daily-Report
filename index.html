@@ -179,7 +179,9 @@ table.matrix td{padding:0}
 .legend .cell{width:14px;height:12px;cursor:default}
 
 .grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
-.members{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.members{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:1060px){.members{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.members{grid-template-columns:1fr}}
 .mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
 .mcard.missing{border-style:dashed;background:transparent}
 .mcard .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -1143,6 +1145,7 @@ function statusHTML() {
       <a class="btn primary sm" href="#write">보고 작성</a>
     </span></div>`;
   h += eltCard(elt, demo);
+  h += "<!--TEAM-->";
   h += issuesCard(openIssues, demo);
   h += `<div class="kpis">
     <div class="kpi ${elt.open.length ? (eltOver ? "bad" : "warn") : ""}"><span class="k">ELT 결정 대기</span><span class="v">${elt.open.length}</span><span class="d">${eltOver ? `기한 초과·오늘 마감 ${eltOver}건` : elt.open.length ? "기한 내" : "없음"}</span></div>
@@ -1170,11 +1173,10 @@ function statusHTML() {
     <div class="legend"><span><span class="cell done"></span>제출</span><span><span class="cell"></span>미제출</span></div>` : `<p class="empty">팀원을 등록하면 근무일별 제출 현황이 표시됩니다.</p>`;
   // 팀원별 카드 + 이슈/파이프라인
   const cards = members.map(m => memberCard(m, byMember.get(m.id), demo)).concat(extra.map(r => memberCard({ id: r.memberId, name: r.memberName, region: r.region }, r, demo))).join("");
-  h += `<div class="grid2"><section class="card" style="padding:16px"><div class="card-h"><h2>팀원별 업무</h2><span class="meta">${fmtDate(date)} 제출분</span></div><div class="members">${cards || '<p class="empty">아직 팀원이 없습니다.</p>'}</div></section>
-    <div style="display:flex;flex-direction:column;gap:16px">${pipelineCard(all, date)}</div></div>`;
   h += `<div class="card"><div class="card-h"><h2>제출 현황</h2><span class="meta">이름을 누르면 보고 전문이 열립니다 · 표의 칸을 누르면 그 날짜로 이동합니다</span></div>
     <div class="chips" style="margin-bottom:14px">${chips || '<span class="empty">등록된 팀원이 없습니다.</span>'}</div>${matrix}</div>`;
-  return h;
+  h += pipelineCard(all, date);
+  return h.replace("<!--TEAM-->", `<section class="card" style="padding:16px"><div class="card-h"><h2>팀원별 업무</h2><span class="meta">${fmtDate(date)} 제출분</span></div><div class="members">${cards || '<p class="empty">아직 팀원이 없습니다.</p>'}</div></section>`);
 }
 function memberCard(m, r, demo) {
   const reg = "";
