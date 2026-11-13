@@ -395,7 +395,9 @@ const WORK_TYPES = ["사무실", "재택", "출장", "외근", "반차", "휴가
 const OFF_TYPES = ["휴가"];
 const TRIP_TYPES = ["출장", "외근"];
 const LOADS = ["여유", "적정", "과중"];
-const TASK_CATS = ["바이어 미팅", "제안·견적", "계약·협상", "시장조사", "전시회·행사", "수출입·물류", "파트너 관리", "내부 보고·회의", "기타"];
+const TASK_CATS = ["고객사 미팅", "개발 견적", "프로젝트 견적", "계약서", "운영", "내부 보고", "기타"];
+/* 예전 보고의 구분 값(목록에 없는 값)은 수정할 때 그대로 보이도록 선택지에 덧붙임 */
+const catOpts = v => opts(v && !TASK_CATS.includes(v) ? TASK_CATS.concat(v) : TASK_CATS, v || TASK_CATS[0]);
 const STATUSES = ["완료", "진행중", "대기", "지연"];
 const STAGES = ["리드", "첫 접촉", "제안·견적", "협상", "계약", "보류", "실주"];
 const ACTIVE_STAGES = ["리드", "첫 접촉", "제안·견적", "협상"];
@@ -1196,12 +1198,12 @@ function rowHTML(kind, o, i) {
   const id = `${kind}-${i}`;
   const del = `<button type="button" class="icon-btn" data-del aria-label="이 행 삭제">×</button>`;
   if (kind === "tasks") return `<div class="row" data-row="tasks">
-    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${opts(TASK_CATS, o.cat)}</select>
+    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${catOpts(o.cat)}</select>
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
     <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="한 일 (예: 샘플 피드백 협의)" aria-label="업무 내용">
     <select id="${id}-status" data-f="status" aria-label="진행 상태">${opts(STATUSES, o.status)}</select>${del}</div>`;
   if (kind === "plans") return `<div class="row" data-row="plans">
-    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${opts(TASK_CATS, o.cat)}</select>
+    <select id="${id}-cat" data-f="cat" aria-label="업무 구분">${catOpts(o.cat)}</select>
     <input type="text" id="${id}-client" data-f="client" list="clientList" value="${esc(o.client)}" placeholder="거래처 / 프로젝트" aria-label="거래처 또는 프로젝트">
     <input type="text" id="${id}-content" data-f="content" value="${esc(o.content)}" placeholder="할 일" aria-label="계획 내용">${del}</div>`;
   if (kind === "pipeline") return `<div class="row" data-row="pipeline">
