@@ -26,6 +26,7 @@
   --accent-soft:#e1f1e8;
   --brand-red:#dd3633; --brand-green:#129861; --brand-ink:#333334;
   --logo-l:block; --logo-d:none;
+  --done-line:#9fd2b7; --done-bar:#129861; --done-hover-line:#333334; --done-hover-bg:#f2f8f4;
   --ok:#1d7f47; --ok-soft:#e1f3e8;
   --warn:#a5680f; --warn-soft:#fbf0dc;
   --bad:#b8392a; --bad-soft:#fbe4e0;
@@ -40,6 +41,7 @@
   :root:not([data-theme="light"]){
     --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
     --accent:#3fbf86; --accent-ink:#04170e; --accent-soft:#12301f; --logo-l:none; --logo-d:block;
+    --done-line:#2d6248; --done-bar:#3fbf86; --done-hover-line:#d5dde0; --done-hover-bg:#17221d;
     --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
     --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
     --idle:#73828a; --idle-soft:#1d262b;
@@ -49,6 +51,7 @@
 :root[data-theme="dark"]{
   --paper:#0e1417; --surface:#151d21; --ink:#e4eaec; --muted:#93a1a8; --line:#25323a;
   --accent:#3fbf86; --accent-ink:#04170e; --accent-soft:#12301f; --logo-l:none; --logo-d:block;
+    --done-line:#2d6248; --done-bar:#3fbf86; --done-hover-line:#d5dde0; --done-hover-bg:#17221d;
   --ok:#4cc27f; --ok-soft:#133022; --warn:#e2a84b; --warn-soft:#33270f;
   --bad:#ef7b67; --bad-soft:#3a1a15; --info:#72a8ea; --info-soft:#15263c;
   --idle:#73828a; --idle-soft:#1d262b;
@@ -277,8 +280,9 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 .modal textarea{min-height:240px;font-family:var(--font-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 /* 승인 · 댓글 · 멘션 */
-.mcard.click{cursor:pointer;transition:border-color .12s,box-shadow .12s}
-.mcard.click:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.mcard.click{cursor:pointer;border-color:var(--done-line);box-shadow:inset 4px 0 0 var(--done-bar);transition:border-color .15s,box-shadow .15s,background-color .15s,transform .15s}
+.mcard.click:hover,.mcard.click:focus-visible{border-color:var(--done-hover-line);background:var(--done-hover-bg);box-shadow:inset 4px 0 0 var(--done-hover-line),0 6px 18px rgba(0,0,0,.08);transform:translateY(-1px);outline:none}
+@media (prefers-reduced-motion: reduce){.mcard.click:hover{transform:none}}
 .mcard .lastc{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .mcard .lastc b{color:var(--ink);font-weight:600;margin-right:4px}
 .rd{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:18px;align-items:start}
