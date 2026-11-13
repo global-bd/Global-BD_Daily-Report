@@ -279,6 +279,23 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 .modal-h .right{margin-left:auto;display:flex;gap:6px}
 .modal textarea{min-height:240px;font-family:var(--font-mono);font-size:12px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:13px;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+/* 작성 기한 띠 (매일 17:00 KST) */
+.deadline{background:var(--brand-ink);color:#fff}
+.deadline.over{background:#a8322a}
+.deadline.done{background:#0f6e45}
+.deadline-inner{max-width:1280px;margin:0 auto;padding:9px 20px;display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.deadline .dl-title{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;letter-spacing:-.01em}
+.deadline .dl-title .clock-ic{width:18px;height:18px;flex:none}
+.deadline .dl-time{font-weight:700;font-size:15px;color:#6fe0a8;font-variant-numeric:tabular-nums}
+.deadline.soon .dl-time{color:#ffc65c}
+.deadline.over .dl-time,.deadline.done .dl-time{color:#fff}
+.deadline .dl-sep{width:1px;height:16px;background:rgba(255,255,255,.28)}
+.deadline .dl-sub{color:rgba(255,255,255,.82)}
+.deadline .dl-me{border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600}
+.deadline .dl-me.ok{background:rgba(255,255,255,.14)}
+.deadline .dl-btn{margin-left:auto;background:#fff;color:#1c2226;border-radius:6px;padding:5px 12px;font-weight:700;font-size:12.5px;text-decoration:none}
+.deadline .dl-btn:hover{filter:brightness(.94)}
+@media (max-width:420px){.deadline-inner{padding:8px 16px}.deadline .dl-btn{margin-left:0}}
 /* 승인 · 댓글 · 멘션 */
 .mcard.click{cursor:pointer;border-color:var(--done-line);box-shadow:inset 4px 0 0 var(--done-bar);transition:border-color .15s,box-shadow .15s,background-color .15s,transform .15s}
 .mcard.click:hover,.mcard.click:focus-visible{border-color:var(--done-hover-line);background:var(--done-hover-bg);box-shadow:inset 4px 0 0 var(--done-hover-line),0 6px 18px rgba(0,0,0,.08);transform:translateY(-1px);outline:none}
@@ -362,6 +379,9 @@ table.tbl tbody tr.click:hover{background:var(--accent-soft)}
 </head>
 <body>
 <header class="top">
+  <div class="deadline" id="deadline" role="status" aria-live="polite"><div class="deadline-inner">
+    <span class="dl-title"><svg class="clock-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>작성 기한 매일 17:00 (KST)</span>
+  </div></div>
   <div class="top-inner">
     <div class="brand-row">
       <div class="brand">
@@ -723,6 +743,34 @@ function tzAbbr(tz, now) {
   try { return (new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "short" }).formatToParts(now).find(p => p.type === "timeZoneName") || {}).value || ""; }
   catch (e) { return ""; }
 }
+/* 작성 기한: 매일 17:00 서울 시각. 남은 시간·미제출 인원·내 제출 여부를 상단 띠에 표시 */
+const DEADLINE_HOUR = 17;
+function renderDeadline() {
+  const box = $("#deadline"); if (!box) return;
+  const p = tzParts("Asia/Seoul", new Date());
+  const weekend = ["Sat", "Sun"].includes(p.wd);
+  const left = DEADLINE_HOUR * 60 - (p.hour * 60 + Number(p.minute));
+  const ready = Store.mode !== "connecting" && Store.loaded;
+  const members = Store.team.members || [];
+  const doneIds = new Set([...Store.reports.values()].filter(r => r.date === p.date).map(r => r.memberId));
+  const missing = members.filter(m => !doneIds.has(m.id));
+  const v = viewer();
+  const mine = v && !v.lead && members.some(m => m.id === v.id) ? doneIds.has(v.id) : null;
+  let cls = "", time = "", sub = "";
+  if (weekend) { time = "주말"; sub = "월요일 17:00까지 작성"; }
+  else if (left > 0) {
+    cls = left <= 60 ? "soon" : "";
+    time = `마감까지 ${Math.floor(left / 60) ? Math.floor(left / 60) + "시간 " : ""}${left % 60}분`;
+    if (ready && members.length) sub = missing.length ? `미제출 ${missing.length}명` : "모두 제출했습니다";
+  } else {
+    cls = ready && members.length && !missing.length ? "done" : "over";
+    time = cls === "done" ? "오늘 보고 모두 제출 완료" : "오늘 마감 시간이 지났습니다";
+    if (ready && missing.length) sub = `미제출 ${missing.length}명: ${missing.map(dispName).join(", ")}`;
+  }
+  box.className = "deadline" + (cls ? " " + cls : "");
+  const title = box.querySelector(".dl-title").outerHTML;
+  box.firstElementChild.innerHTML = `${title}<span class="dl-sep" aria-hidden="true"></span><span class="dl-time">${esc(time)}</span>${sub ? `<span class="dl-sub">${esc(sub)}</span>` : ""}${mine === null ? "" : `<span class="dl-me${mine ? " ok" : ""}">${mine ? "✓ 내 보고 제출 완료" : "내 보고 미제출"}</span>`}${!weekend && mine === false ? `<a class="dl-btn" href="#write">지금 작성하기</a>` : ""}`;
+}
 function renderClocks() {
   const now = new Date();
   const seoul = tzParts("Asia/Seoul", now);
@@ -733,6 +781,7 @@ function renderClocks() {
     return `<span class="clock" title="${esc(c.label)} 현지 시각${on ? " · 업무 시간" : ""}"><span class="dot${on ? " on" : ""}"></span><span class="city">${esc(c.label)}</span><b>${pad(p.hour)}:${p.minute}</b><span class="abbr">${esc(c.abbr || tzAbbr(c.tz, now))}</span>${diff ? `<span class="off">${diff > 0 ? "+" : ""}${diff}일</span>` : ""}</span>`;
   }).join("");
   $("#todayLabel").textContent = [leaderLabel(isDemo() ? null : Store.team), fmtDateLong(today())].filter(Boolean).join(" · ");
+  renderDeadline();
 }
 function renderMode() {
   const b = $("#modeBadge");
