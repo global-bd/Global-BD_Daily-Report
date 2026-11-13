@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>해외사업팀 일일보고</title>
+<title>Global-BD_Daily Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -619,8 +619,8 @@ function renderMode() {
   b.dataset.mode = Store.mode; b.querySelector("span").textContent = label;
   b.title = Store.mode === "local" ? "다른 팀원과 공유되지 않습니다. 팀원·설정 탭에서 공유 방법을 확인하세요." : "";
   const name = (Store.team.teamName || CFG.TEAM_NAME);
-  $("#teamTitle").textContent = `${name} 일일보고`;
-  document.title = `${name} 일일보고`;
+  $("#teamTitle").textContent = CFG.SITE_TITLE || `${name} 일일보고`;
+  document.title = CFG.SITE_TITLE || `${name} 일일보고`;
 }
 
 /* =========================================================

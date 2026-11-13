@@ -28,8 +28,8 @@
 
 ## 현재 배포 상태
 
-- 사이트: https://global-bd.github.io/ (이 링크를 팀원에게 공유하면 바로 작성·편집 가능)
-- 저장소: https://github.com/global-bd/global-bd.github.io
+- 사이트: https://global-bd.github.io/Global-BD_Daily-Report/ (이 링크를 팀원에게 공유하면 바로 작성·편집 가능)
+- 저장소: https://github.com/global-bd/Global-BD_Daily-Report
 - 데이터: Google 스프레드시트 ‘해외사업팀 일일보고 DB’ (kmgdec08@gmail.com 소유), Apps Script 프로젝트 ‘해외사업팀 일일보고 API’
 
 ## GitHub에 올리기 (새로 만들 때)

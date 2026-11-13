@@ -3,6 +3,7 @@
 // (설정 방법: README.md → "팀 공유 저장소 연결")
 // 비워 두면 각자의 브라우저에만 저장됩니다. Claude 아티팩트에서는 자동으로 공유 저장소를 사용합니다.
 window.BD_CONFIG = {
+  SITE_TITLE: "Global-BD_Daily Report",
   TEAM_NAME: "해외사업팀",
   SHEETS_API_URL: "https://script.google.com/macros/s/AKfycbwi4mbN5pU8CWNkU4ItOKLTaxTHbgG0Xd9cuugYp3nBk4BNPHvnajuWm8lipdKPLGt_iA/exec",
 
